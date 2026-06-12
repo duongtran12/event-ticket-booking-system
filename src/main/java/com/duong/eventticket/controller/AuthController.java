@@ -1,6 +1,8 @@
 package com.duong.eventticket.controller;
 
+import com.duong.eventticket.dto.request.LoginRequest;
 import com.duong.eventticket.dto.request.RegisterRequest;
+import com.duong.eventticket.dto.response.LoginResponse;
 import com.duong.eventticket.dto.response.MessageResponse;
 import com.duong.eventticket.service.AuthService;
 import jakarta.validation.Valid;
@@ -22,6 +24,15 @@ public class AuthController {
 
         return ResponseEntity.ok(
                 authService.register(request)
+        );
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request
+    ) {
+        return ResponseEntity.ok(
+                authService.login(request)
         );
     }
 }
