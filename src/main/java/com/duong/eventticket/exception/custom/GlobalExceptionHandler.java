@@ -43,6 +43,18 @@ public class GlobalExceptionHandler {
                 .body(new MessageResponse("Invalid email or password"));
     }
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<MessageResponse> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new MessageResponse("You do not have permission to access this resource"));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<MessageResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new MessageResponse(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<MessageResponse> handleGeneralException(Exception ex) {
         log.error("Unexpected error occurred: ", ex);
