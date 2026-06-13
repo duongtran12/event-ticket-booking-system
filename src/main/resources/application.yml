@@ -19,3 +19,7 @@ spring:
 
 server:
   port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyMySecretKeyMySecretKey123456NeedToBeAtLeast32BytesLong}
+  expiration: 86400000 # 24 hours in milliseconds
