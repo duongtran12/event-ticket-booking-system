@@ -15,10 +15,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
 public class EventController {
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "dateTime",
+            "price",
+            "title",
+            "location",
+            "createdAt"
+    );
 
     private final EventService eventService;
 
@@ -42,14 +52,7 @@ public class EventController {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sort", defaultValue = "dateTime,asc") String sort
     ) {
-        String[] sortParams = sort.split(",");
-        String sortField = sortParams[0];
-        Sort.Direction direction = Sort.Direction.ASC;
-        if (sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc")) {
-            direction = Sort.Direction.DESC;
-        }
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        Pageable pageable = PageRequest.of(page, size, parseSort(sort));
         Page<EventResponse> response = eventService.getAllEvents(keyword, pageable);
         return ResponseEntity.ok(response);
     }
@@ -69,5 +72,21 @@ public class EventController {
     public ResponseEntity<MessageResponse> deleteEvent(@PathVariable Long id) {
         eventService.deleteEvent(id);
         return ResponseEntity.ok(new MessageResponse("Event deleted successfully"));
+    }
+
+    private Sort parseSort(String sort) {
+        String[] sortParams = sort.split(",");
+        String sortField = sortParams[0].trim();
+
+        if (!ALLOWED_SORT_FIELDS.contains(sortField)) {
+            sortField = "dateTime";
+        }
+
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortParams.length > 1 && sortParams[1].trim().equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+
+        return Sort.by(direction, sortField);
     }
 }
