@@ -22,13 +22,8 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventResponse createEvent(EventRequest request) {
         Event event = new Event();
-        event.setTitle(request.getTitle());
-        event.setDescription(request.getDescription());
-        event.setLocation(request.getLocation());
-        event.setDateTime(request.getDateTime());
-        event.setPrice(request.getPrice());
-        event.setTotalTickets(request.getTotalTickets());
-        event.setAvailableTickets(request.getTotalTickets()); // initially available tickets = total tickets
+        applyRequest(event, request);
+        event.setAvailableTickets(request.getTotalTickets());
 
         Event savedEvent = eventRepository.save(event);
         return mapToResponse(savedEvent);
@@ -55,18 +50,16 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
 
-        int ticketDifference = request.getTotalTickets() - event.getTotalTickets();
-        int newAvailableTickets = event.getAvailableTickets() + ticketDifference;
+        int soldTickets = getSoldTickets(event);
+        int newAvailableTickets = calculateAvailableTickets(event, request.getTotalTickets());
         if (newAvailableTickets < 0) {
-            throw new IllegalArgumentException("Cannot reduce total tickets. New capacity (" + request.getTotalTickets() + ") " +
-                    "is less than tickets already sold (" + (event.getTotalTickets() - event.getAvailableTickets()) + ").");
+            throw new IllegalArgumentException(
+                    "Cannot reduce total tickets. New capacity (" + request.getTotalTickets() + ") " +
+                    "is less than tickets already sold (" + soldTickets + ")."
+            );
         }
 
-        event.setTitle(request.getTitle());
-        event.setDescription(request.getDescription());
-        event.setLocation(request.getLocation());
-        event.setDateTime(request.getDateTime());
-        event.setPrice(request.getPrice());
+        applyRequest(event, request);
         event.setTotalTickets(request.getTotalTickets());
         event.setAvailableTickets(newAvailableTickets);
 
@@ -81,6 +74,23 @@ public class EventServiceImpl implements EventService {
             throw new ResourceNotFoundException("Event not found with id: " + id);
         }
         eventRepository.deleteById(id);
+    }
+
+    private void applyRequest(Event event, EventRequest request) {
+        event.setTitle(request.getTitle());
+        event.setDescription(request.getDescription());
+        event.setLocation(request.getLocation());
+        event.setDateTime(request.getDateTime());
+        event.setPrice(request.getPrice());
+    }
+
+    private int calculateAvailableTickets(Event event, Integer newTotalTickets) {
+        int ticketDifference = newTotalTickets - event.getTotalTickets();
+        return event.getAvailableTickets() + ticketDifference;
+    }
+
+    private int getSoldTickets(Event event) {
+        return event.getTotalTickets() - event.getAvailableTickets();
     }
 
     private EventResponse mapToResponse(Event event) {
