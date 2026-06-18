@@ -14,14 +14,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
+@Tag(name = "Bookings", description = "APIs for booking tickets and managing booking history")
 public class BookingController {
 
     private final BookingService bookingService;
 
     @PostMapping
+    @Operation(summary = "Create a booking")
     public ResponseEntity<BookingResponse> createBooking(
             @Valid @RequestBody BookingRequest request,
             Authentication authentication
@@ -32,6 +37,7 @@ public class BookingController {
     }
 
     @GetMapping("/my-bookings")
+    @Operation(summary = "Get my booking history")
     public ResponseEntity<Page<BookingResponse>> getMyBookings(
             Authentication authentication,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -44,6 +50,7 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get a booking by id")
     public ResponseEntity<BookingResponse> getBookingById(
             @PathVariable Long id,
             Authentication authentication
@@ -54,6 +61,7 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/cancel")
+    @Operation(summary = "Cancel a booking")
     public ResponseEntity<BookingResponse> cancelBooking(
             @PathVariable Long id,
             Authentication authentication

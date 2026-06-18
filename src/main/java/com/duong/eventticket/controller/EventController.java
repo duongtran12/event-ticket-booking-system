@@ -17,9 +17,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
+@Tag(name = "Events", description = "APIs for event management and browsing")
 public class EventController {
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
@@ -34,18 +38,21 @@ public class EventController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create a new event")
     public ResponseEntity<EventResponse> createEvent(@Valid @RequestBody EventRequest request) {
         EventResponse response = eventService.createEvent(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get event by id")
     public ResponseEntity<EventResponse> getEventById(@PathVariable Long id) {
         EventResponse response = eventService.getEventById(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
+    @Operation(summary = "Get all events with pagination and search")
     public ResponseEntity<Page<EventResponse>> getAllEvents(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -59,6 +66,7 @@ public class EventController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update an event")
     public ResponseEntity<EventResponse> updateEvent(
             @PathVariable Long id,
             @Valid @RequestBody EventRequest request
@@ -69,6 +77,7 @@ public class EventController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete an event")
     public ResponseEntity<MessageResponse> deleteEvent(@PathVariable Long id) {
         eventService.deleteEvent(id);
         return ResponseEntity.ok(new MessageResponse("Event deleted successfully"));
