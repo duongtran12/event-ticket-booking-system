@@ -1,7 +1,7 @@
 package com.duong.eventticket.dto.request;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,9 +10,10 @@ import lombok.Setter;
 public class BookingRequest {
 
     @NotNull(message = "Event ID is required")
+    @Positive(message = "Event ID must be positive")
     private Long eventId;
 
     @NotNull(message = "Quantity is required")
-    @Min(value = 1, message = "Quantity must be at least 1")
+    @Positive(message = "Quantity must be positive")
     private Integer quantity;
 }
