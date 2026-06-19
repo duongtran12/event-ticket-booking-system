@@ -23,6 +23,7 @@ public class EventServiceImpl implements EventService {
     public EventResponse createEvent(EventRequest request) {
         Event event = new Event();
         applyRequest(event, request);
+        event.setTotalTickets(request.getTotalTickets());
         event.setAvailableTickets(request.getTotalTickets());
 
         Event savedEvent = eventRepository.save(event);
