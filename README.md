@@ -47,6 +47,21 @@ A backend project built with Java 21 and Spring Boot for learning and internship
 4. Open Swagger UI:
 - `/swagger-ui.html`
 
+## Docker Run
+1. Build and start both app and MySQL:
+
+```bash
+docker compose up --build
+```
+
+2. Open the API:
+- `http://localhost:8080`
+
+3. Open Swagger UI:
+- `http://localhost:8080/swagger-ui.html`
+
+The app container connects to the MySQL container through the Docker network, so you do not need a local MySQL instance for this mode.
+
 ## Default Data
 - The application initializes default roles on startup.
 - A default admin account is also created if it does not exist.
