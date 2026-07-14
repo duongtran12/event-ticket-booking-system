@@ -36,7 +36,7 @@ public class Booking {
     private BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private BookingStatus status;
 
     @CreationTimestamp

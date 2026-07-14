@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -69,5 +71,37 @@ public class BookingController {
         String userEmail = authentication.getName();
         BookingResponse response = bookingService.cancelBooking(userEmail, id);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/pay")
+    @Operation(summary = "Create a VNPay payment URL")
+    public ResponseEntity<Map<String, String>> createPaymentUrl(
+            @PathVariable Long id,
+            Authentication authentication,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String forwardedIp,
+            @RequestParam(value = "clientIp", required = false) String clientIp
+    ) {
+        String userEmail = authentication.getName();
+        String ip = clientIp != null && !clientIp.isBlank() ? clientIp : forwardedIp;
+        String paymentUrl = bookingService.createPaymentUrl(userEmail, id, ip != null ? ip : "127.0.0.1");
+        return ResponseEntity.ok(Map.of("paymentUrl", paymentUrl));
+    }
+
+    @PostMapping("/{id}/complete")
+    @Operation(summary = "Complete payment locally")
+    public ResponseEntity<BookingResponse> completePayment(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String userEmail = authentication.getName();
+        BookingResponse response = bookingService.completePayment(userEmail, id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/payment-callback")
+    @Operation(summary = "Handle payment callback")
+    public ResponseEntity<String> handlePaymentCallback(@RequestParam Map<String, String> params) {
+        boolean success = bookingService.handlePaymentCallback(params);
+        return success ? ResponseEntity.ok("success") : ResponseEntity.badRequest().body("failed");
     }
 }

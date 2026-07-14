@@ -20,7 +20,10 @@ A backend project built with Java 21 and Spring Boot for learning and internship
 - Role-based authorization for USER and ADMIN
 - Event CRUD APIs
 - Event search and pagination
-- Booking creation, history, and cancellation
+- Booking creation with reservation flow
+- VNPay payment integration for reserved bookings
+- Automatic release of expired reservations after 10 minutes
+- Status lifecycle: AVAILABLE -> RESERVED -> SOLD
 - Pessimistic lock for booking stock safety
 - Global exception handling
 - Swagger API documentation
@@ -37,6 +40,8 @@ A backend project built with Java 21 and Spring Boot for learning and internship
 
 ## How to Run
 1. Start MySQL and create the database configured in `src/main/resources/application.yml`.
+   - If you use Docker, run `docker compose up -d` first.
+   - If you run locally, ensure MySQL is listening on `localhost:3307` and `event_ticket_db` exists.
 2. Update datasource credentials if needed.
 3. Run the application:
 

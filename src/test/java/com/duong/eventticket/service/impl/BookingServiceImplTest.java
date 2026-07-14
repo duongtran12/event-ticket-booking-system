@@ -42,7 +42,7 @@ class BookingServiceImplTest {
     private BookingServiceImpl bookingService;
 
     @Test
-    void createBookingShouldReduceAvailableTicketsAndReturnPendingBooking() {
+    void createBookingShouldReserveTicketsAndReturnReservedBooking() {
         User user = buildUser();
         Event event = buildEvent(100, 100000);
         BookingRequest request = buildBookingRequest(1L, 3);
@@ -56,8 +56,28 @@ class BookingServiceImplTest {
 
         assertEquals(3, response.getQuantity());
         assertEquals(BigDecimal.valueOf(300000), response.getTotalPrice());
-        assertEquals("PENDING", response.getStatus());
+        assertEquals("RESERVED", response.getStatus());
         assertEquals(97, event.getAvailableTickets());
+    }
+
+    @Test
+    void completePaymentShouldMarkBookingAsSold() {
+        User user = buildUser();
+        Event event = buildEvent(97, 100000);
+        Booking booking = new Booking();
+        booking.setId(10L);
+        booking.setUser(user);
+        booking.setEvent(event);
+        booking.setQuantity(3);
+        booking.setTotalPrice(BigDecimal.valueOf(300000));
+        booking.setStatus(BookingStatus.RESERVED);
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        BookingResponse response = bookingService.completePayment("user@example.com", 10L);
+
+        assertEquals("SOLD", response.getStatus());
     }
 
     @Test
@@ -70,7 +90,7 @@ class BookingServiceImplTest {
         booking.setEvent(event);
         booking.setQuantity(3);
         booking.setTotalPrice(BigDecimal.valueOf(300000));
-        booking.setStatus(BookingStatus.PENDING);
+        booking.setStatus(BookingStatus.RESERVED);
 
         when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
         when(eventRepository.findByIdWithLock(1L)).thenReturn(Optional.of(event));
@@ -79,7 +99,7 @@ class BookingServiceImplTest {
 
         BookingResponse response = bookingService.cancelBooking("user@example.com", 10L);
 
-        assertEquals("CANCELLED", response.getStatus());
+        assertEquals("AVAILABLE", response.getStatus());
         assertEquals(100, event.getAvailableTickets());
     }
 
@@ -93,7 +113,7 @@ class BookingServiceImplTest {
         booking.setEvent(event);
         booking.setQuantity(1);
         booking.setTotalPrice(BigDecimal.valueOf(100000));
-        booking.setStatus(BookingStatus.PENDING);
+        booking.setStatus(BookingStatus.RESERVED);
 
         when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
 
