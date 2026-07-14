@@ -22,8 +22,8 @@ export function BookingCard({ booking, onPay }) {
       </div>
       <div className="booking-details">
         <span>Số lượng: {booking.quantity}</span>
-        <span>Tổng giá: {totalPrice.toLocaleString('vi-VN')}₫</span>
-        <span>Đặt lúc: {new Date(booking.createdAt).toLocaleString('vi-VN')}</span>
+        <span> Tổng giá: {totalPrice.toLocaleString('vi-VN')}₫</span>
+        <span> Đặt lúc: {new Date(booking.createdAt).toLocaleString('vi-VN')}</span>
       </div>
       {booking.status === 'RESERVED' && (
         <button type="button" className="primary" onClick={() => onPay(booking.id)}>

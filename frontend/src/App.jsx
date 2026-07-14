@@ -314,7 +314,24 @@ function App() {
   const handlePaymentCallback = async () => {
     const params = new URLSearchParams(window.location.search);
     const bookingId = params.get('bookingId');
+    const responseCode = params.get('vnp_ResponseCode');
+
     if (!bookingId) {
+      return;
+    }
+
+    // Only complete payment when VNPAY returns success
+    if (responseCode !== '00') {
+      setMessage('Thanh toán không hoàn tất. Vé vẫn giữ chỗ và bạn có thể thử lại.');
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('bookingId');
+        url.searchParams.delete('vnp_ResponseCode');
+        window.history.replaceState({}, document.title, url.pathname + url.search);
+      } catch (ignore) {}
+      if (activePage === PAGES.BOOKINGS) {
+        fetchBookings();
+      }
       return;
     }
 
@@ -324,20 +341,20 @@ function App() {
       if (activePage === PAGES.BOOKINGS) {
         fetchBookings();
       }
-      // Remove bookingId from URL to avoid re-trigger on reload
       try {
         const url = new URL(window.location.href);
         url.searchParams.delete('bookingId');
+        url.searchParams.delete('vnp_ResponseCode');
         window.history.replaceState({}, document.title, url.pathname + url.search);
       } catch (ignore) {}
     } catch (e) {
       const msg = e.message || '';
-      // If already completed, treat as success and don't show error
       if (msg.includes('Only RESERVED bookings can be completed') || msg.includes('Current status: SOLD')) {
         setMessage('Thanh toán đã được xử lý trước đó.');
         try {
           const url = new URL(window.location.href);
           url.searchParams.delete('bookingId');
+          url.searchParams.delete('vnp_ResponseCode');
           window.history.replaceState({}, document.title, url.pathname + url.search);
         } catch (ignore) {}
         if (activePage === PAGES.BOOKINGS) fetchBookings();
@@ -416,10 +433,10 @@ function App() {
                 <div>
                   <span className="sort-label">Sắp xếp theo</span>
                   <select id="sort" value={sort} onChange={(event) => setSort(event.target.value)}>
-                    <option value="dateTime,asc">Ngày tăng dần</option>
-                    <option value="dateTime,desc">Ngày giảm dần</option>
-                    <option value="price,asc">Giá vé thấp đến cao</option>
-                    <option value="price,desc">Giá vé cao đến thấp</option>
+                    <option value="dateTime,asc">Mới nhất</option>
+                    <option value="dateTime,desc">Cũ nhất</option>
+                    <option value="price,asc">Giá vé cao nhất</option>
+                    <option value="price,desc">Giá vé thấp nhất</option>
                   </select>
                 </div>
                 <div className="page-summary">
