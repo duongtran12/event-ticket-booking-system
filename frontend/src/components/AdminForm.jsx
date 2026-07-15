@@ -37,6 +37,16 @@ export function AdminForm({ values, onChange, onSubmit, loading, submitLabel = '
         </label>
 
         <label>
+          Ảnh sự kiện (URL)
+          <input
+            value={values.imageUrl}
+            onChange={(e) => onChange('imageUrl', e.target.value)}
+            type="url"
+            placeholder="https://example.com/image.jpg"
+          />
+        </label>
+
+        <label>
           Ngày giờ
           <input
             value={values.dateTime}

@@ -39,6 +39,7 @@ function App() {
     title: '',
     description: '',
     location: '',
+    imageUrl: '',
     dateTime: '',
     price: '',
     totalTickets: '',
@@ -151,12 +152,13 @@ function App() {
         title: adminValues.title,
         description: adminValues.description,
         location: adminValues.location,
+        imageUrl: adminValues.imageUrl,
         dateTime: adminValues.dateTime,
         price: Number(adminValues.price),
         totalTickets: Number(adminValues.totalTickets),
       };
       await createEvent(token, payload);
-      setAdminValues({ title: '', description: '', location: '', dateTime: '', price: '', totalTickets: '' });
+      setAdminValues({ title: '', description: '', location: '', imageUrl: '', dateTime: '', price: '', totalTickets: '' });
       setMessage('Sự kiện mới đã được tạo thành công.');
       setActivePage(PAGES.HOME);
       fetchEvents();
@@ -174,6 +176,7 @@ function App() {
       title: eventData.title,
       description: eventData.description,
       location: eventData.location,
+      imageUrl: eventData.imageUrl || '',
       dateTime: eventData.dateTime,
       price: eventData.price,
       totalTickets: eventData.totalTickets,
@@ -184,7 +187,7 @@ function App() {
   const handleCancelEdit = () => {
     setEditMode(false);
     setSelectedEvent(null);
-    setAdminValues({ title: '', description: '', location: '', dateTime: '', price: '', totalTickets: '' });
+    setAdminValues({ title: '', description: '', location: '', imageUrl: '', dateTime: '', price: '', totalTickets: '' });
   };
 
   const handleSaveEvent = async (event) => {
@@ -198,6 +201,7 @@ function App() {
         title: adminValues.title,
         description: adminValues.description,
         location: adminValues.location,
+        imageUrl: adminValues.imageUrl,
         dateTime: adminValues.dateTime,
         price: Number(adminValues.price),
         totalTickets: Number(adminValues.totalTickets),
@@ -411,48 +415,257 @@ function App() {
         )}
 
         {activePage === PAGES.HOME && (
-          <section>
-            <div className="toolbar home-toolbar">
-              <div className="home-intro">
-                <p className="eyebrow">Khám phá ngay</p>
-                <h2>Đặt vé sự kiện HOT nhất</h2>
-                <p className="hero-description">Tìm nhanh sự kiện bạn yêu thích, so sánh vé và hoàn tất đặt vé chỉ trong vài bước.</p>
+          <section
+            style={{
+              maxWidth: '1200px',
+              margin: '0 auto',
+              padding: '40px 20px',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}
+          >
+            {/* Section 1: Hero Banner */}
+            <div
+              className="toolbar home-toolbar"
+              style={{
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                borderRadius: '24px',
+                padding: '60px 40px',
+                textAlign: 'center',
+                color: '#ffffff',
+                marginBottom: '32px',
+                boxShadow: '0 10px 30px rgba(15, 23, 42, 0.15)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <div className="home-intro" style={{ position: 'relative', zIndex: 2 }}>
+                <p
+                  className="eyebrow"
+                  style={{
+                    textTransform: 'uppercase',
+                    letterSpacing: '1.5px',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    color: '#38bdf8',
+                    marginBottom: '12px',
+                    marginTop: 0
+                  }}
+                >
+                  Khám phá ngay
+                </p>
+                <h2
+                  style={{
+                    fontSize: '36px',
+                    fontWeight: '800',
+                    margin: '0 0 16px 0',
+                    lineHeight: '1.2',
+                    letterSpacing: '-0.5px'
+                  }}
+                >
+                  Đặt vé sự kiện HOT nhất
+                </h2>
+                <p
+                  className="hero-description"
+                  style={{
+                    fontSize: '16px',
+                    color: '#94a3b8',
+                    maxWidth: '600px',
+                    margin: '0 auto',
+                    lineHeight: '1.6'
+                  }}
+                >
+                  Tìm nhanh sự kiện bạn yêu thích, so sánh vé và hoàn tất đặt vé chỉ trong vài bước.
+                </p>
               </div>
+
+              {/* Background Decorative Blur Circles */}
+              <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '200px', height: '200px', background: 'rgba(56, 189, 248, 0.15)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
+              <div style={{ position: 'absolute', bottom: '-50px', right: '-50px', width: '200px', height: '200px', background: 'rgba(99, 102, 241, 0.15)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
             </div>
-            <div className="toolbar">
-              <form className="search-form" onSubmit={handleSearch}>
-                <input
-                  placeholder="Bạn tìm gì hôm nay?"
-                  value={keyword}
-                  onChange={(event) => setKeyword(event.target.value)}
-                />
-                <button type="submit">Tìm kiếm</button>
+
+            {/* Section 2: Search & Filter Toolbar */}
+            <div
+              className="toolbar"
+              style={{
+                background: '#ffffff',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
+                border: '1px solid #f1f5f9',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+                marginBottom: '40px'
+              }}
+            >
+              {/* Search Bar */}
+              <form
+                className="search-form"
+                onSubmit={handleSearch}
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  width: '100%'
+                }}
+              >
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input
+                    placeholder="Bạn tìm gì hôm nay? (Tên sự kiện, địa điểm...)"
+                    value={keyword}
+                    onChange={(event) => setKeyword(event.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '14px 16px 14px 44px',
+                      fontSize: '15px',
+                      borderRadius: '12px',
+                      border: '1px solid #cbd5e1',
+                      outline: 'none',
+                      transition: 'all 0.2s ease',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#006af5';
+                      e.target.style.boxShadow = '0 0 0 4px rgba(0, 106, 245, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#cbd5e1';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  {/* Search Icon */}
+                  <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+                    🔍
+                  </span>
+                </div>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '14px 28px',
+                    background: '#006af5',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s ease',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#0056c6'}
+                  onMouseOut={(e) => e.currentTarget.style.background = '#006af5'}
+                >
+                  Tìm kiếm
+                </button>
               </form>
 
-              <div className="sort-panel">
-                <div>
-                  <span className="sort-label">Sắp xếp theo</span>
-                  <select id="sort" value={sort} onChange={(event) => setSort(event.target.value)}>
+              {/* Sort and Stats panel */}
+              <div
+                className="sort-panel"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '16px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid #f1f5f9'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span className="sort-label" style={{ fontSize: '14px', fontWeight: '600', color: '#64748b' }}>
+                    Sắp xếp theo
+                  </span>
+                  <select
+                    id="sort"
+                    value={sort}
+                    onChange={(event) => setSort(event.target.value)}
+                    style={{
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      outline: 'none',
+                      background: '#f8fafc',
+                      cursor: 'pointer',
+                      color: '#334155'
+                    }}
+                  >
                     <option value="dateTime,asc">Mới nhất</option>
                     <option value="dateTime,desc">Cũ nhất</option>
-                    <option value="price,asc">Giá vé cao nhất</option>
-                    <option value="price,desc">Giá vé thấp nhất</option>
+                    <option value="price,asc">Giá vé thấp đến cao</option>
+                    <option value="price,desc">Giá vé cao đến thấp</option>
                   </select>
                 </div>
-                <div className="page-summary">
-                  <span>{totalEventsCount.toLocaleString('vi-VN')} sự kiện</span>
+
+                <div
+                  className="page-summary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    fontSize: '14px',
+                    color: '#64748b'
+                  }}
+                >
+                  <span style={{ fontWeight: '600', color: '#0f172a' }}>
+                    {totalEventsCount.toLocaleString('vi-VN')} sự kiện
+                  </span>
+                  <span style={{ width: '1px', height: '14px', background: '#cbd5e1' }}></span>
                   <span>Trang {page + 1} / {Math.max(totalPages, 1)}</span>
                 </div>
               </div>
             </div>
 
+            {/* Section 3: Content (Grid / Loading / Empty states) */}
             {loading ? (
-              <div className="message-panel">Đang tải sự kiện...</div>
+              <div
+                className="message-panel"
+                style={{
+                  textAlign: 'center',
+                  padding: '80px 20px',
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  color: '#64748b',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
+                }}
+              >
+                <div className="spinner" style={{ marginBottom: '12px', fontSize: '24px' }}>⏳</div>
+                Đang tải danh sách sự kiện...
+              </div>
             ) : events.length === 0 ? (
-              <div className="message-panel">Không tìm thấy sự kiện phù hợp.</div>
+              <div
+                className="message-panel"
+                style={{
+                  textAlign: 'center',
+                  padding: '80px 20px',
+                  background: '#ffffff',
+                  borderRadius: '16px',
+                  color: '#64748b',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
+                }}
+              >
+                <div style={{ marginBottom: '12px', fontSize: '32px' }}>🔍</div>
+                Không tìm thấy sự kiện phù hợp. Hãy thử từ khóa khác!
+              </div>
             ) : (
               <>
-                <div className="event-grid">
+                {/* Grid layout for Events */}
+                <div
+                  className="event-grid"
+                  style={{
+                    display: 'grid',
+                    justifyItems: 'stretch',
+                    alignItems: 'stretch',
+                    gap: '30px',
+                    marginBottom: '40px',
+                    width: '100%'
+                  }}
+                >
                   {events.map((event) => (
                     <EventCard
                       key={event.id}
@@ -463,13 +676,80 @@ function App() {
                     />
                   ))}
                 </div>
+
+                {/* Section 4: Pagination */}
                 {totalPages > 1 && (
-                  <div className="pagination">
-                    <button type="button" className="secondary" onClick={() => setPage((current) => Math.max(current - 1, 0))} disabled={page <= 0}>
+                  <div
+                    className="pagination"
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '16px',
+                      marginTop: '48px'
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                      disabled={page <= 0}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        background: page <= 0 ? '#f1f5f9' : '#ffffff',
+                        color: page <= 0 ? '#94a3b8' : '#334155',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: page <= 0 ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        if (page > 0) e.currentTarget.style.borderColor = '#006af5';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                      }}
+                    >
                       Trang trước
                     </button>
-                    <span className="page-info">{page + 1} / {totalPages}</span>
-                    <button type="button" className="secondary" onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))} disabled={page >= totalPages - 1}>
+                    <span
+                      className="page-info"
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#0f172a',
+                        background: '#f1f5f9',
+                        padding: '8px 16px',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      {page + 1} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setPage((current) => Math.min(current + 1, totalPages - 1))}
+                      disabled={page >= totalPages - 1}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        background: page >= totalPages - 1 ? '#f1f5f9' : '#ffffff',
+                        color: page >= totalPages - 1 ? '#94a3b8' : '#334155',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseOver={(e) => {
+                        if (page < totalPages - 1) e.currentTarget.style.borderColor = '#006af5';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                      }}
+                    >
                       Trang sau
                     </button>
                   </div>

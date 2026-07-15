@@ -33,7 +33,7 @@ export function NavBar({ activePage, onNavigate, isAuthenticated, isAdmin, userE
         )}
         {isAdmin && (
           <button className={activePage === 'admin' ? 'active' : ''} onClick={() => onNavigate('admin')}>
-            Admin
+            Quản lí
           </button>
         )}
         {!isAuthenticated ? (

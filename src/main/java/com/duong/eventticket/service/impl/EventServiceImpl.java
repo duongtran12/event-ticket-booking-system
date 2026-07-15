@@ -81,6 +81,7 @@ public class EventServiceImpl implements EventService {
         event.setTitle(request.getTitle());
         event.setDescription(request.getDescription());
         event.setLocation(request.getLocation());
+        event.setImageUrl(request.getImageUrl());
         event.setDateTime(request.getDateTime());
         event.setPrice(request.getPrice());
     }
@@ -100,6 +101,7 @@ public class EventServiceImpl implements EventService {
         response.setTitle(event.getTitle());
         response.setDescription(event.getDescription());
         response.setLocation(event.getLocation());
+        response.setImageUrl(event.getImageUrl());
         response.setDateTime(event.getDateTime());
         response.setPrice(event.getPrice());
         response.setTotalTickets(event.getTotalTickets());

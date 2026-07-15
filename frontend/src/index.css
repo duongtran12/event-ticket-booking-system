@@ -453,7 +453,20 @@ button {
 .event-grid {
   display: grid;
   gap: 22px;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  grid-auto-rows: 1fr;
+}
+
+@media (max-width: 1024px) {
+  .event-grid {
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .event-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .event-card,
@@ -464,6 +477,16 @@ button {
   padding: 24px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .event-card:hover,
@@ -473,17 +496,28 @@ button {
   box-shadow: 0 20px 48px rgba(15, 23, 42, 0.12);
 }
 
-.event-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+.event-image-wrap {
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 18px;
 }
 
-.event-header h2,
-.booking-card h3 {
-  margin: 0;
-  font-size: 1.2rem;
+.event-image {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+.event-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 6rem;
+  max-height: 6rem;
+  margin: 0 0 8px;
 }
 
 .badge {
@@ -497,6 +531,20 @@ button {
 .event-description {
   color: #475569;
   margin: 18px 0;
+  min-height: 84px;
+  max-height: 84px;
+  overflow-y: auto;
+  padding-right: 8px;
+  line-height: 1.5;
+}
+
+.event-description::-webkit-scrollbar {
+  width: 8px;
+}
+
+.event-description::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
 }
 
 .event-details {
@@ -529,6 +577,7 @@ button {
 .event-actions {
   display: grid;
   gap: 12px;
+  margin-top: auto;
 }
 
 .event-actions label {
@@ -545,10 +594,10 @@ button {
   background: #f8fafc;
 }
 
-  .event-actions button {
-    width: 100%;
-    min-width: 0;
-  }
+.event-actions button {
+  width: 100%;
+  min-width: 0;
+}
 
 .form-card label {
   display: grid;
@@ -557,15 +606,15 @@ button {
   font-weight: 600;
 }
 
-  .form-card input,
-  .form-card textarea {
-    width: 100%;
-    border: 1px solid #cbd5e1;
-    border-radius: 14px;
-    padding: 12px 14px;
-    background: #f8fafc;
-    color: #0f172a;
-  }
+.form-card input,
+.form-card textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  color: #0f172a;
+}
 
   .form-card textarea {
     min-height: 120px;

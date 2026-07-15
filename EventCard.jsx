@@ -11,7 +11,10 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
         overflow: 'hidden',
         boxShadow: '0 4px 18px rgba(0, 0, 0, 0.06)',
         border: '1px solid #f1f5f9',
-        fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        width: '100%',
+        minWidth: '280px',
+        maxWidth: '380px',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
         boxSizing: 'border-box'
       }}
     >
@@ -85,7 +88,7 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
                 display: 'inline-block'
               }}
             >
-              📍 {event.location}
+              ?? {event.location}
             </span>
           </div>
         </div>
@@ -117,7 +120,7 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
           }}
         >
           <div>
-            <strong style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Thời gian</strong>
+            <strong style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Th?i gian</strong>
             <p style={{ margin: '2px 0 0 0', fontSize: '13px', fontWeight: '600', color: '#334155' }}>
               {new Date(event.dateTime).toLocaleString('vi-VN', {
                 hour: '2-digit',
@@ -129,9 +132,9 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
             </p>
           </div>
           <div>
-            <strong style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Giá vé</strong>
+            <strong style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>Gi� v�</strong>
             <p style={{ margin: '2px 0 0 0', fontSize: '15px', fontWeight: '800', color: '#ef4444' }}>
-              {priceValue.toLocaleString('vi-VN')} ₫
+              {priceValue.toLocaleString('vi-VN')} ?
             </p>
           </div>
         </div>
@@ -145,8 +148,8 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
             color: '#64748b'
           }}
         >
-          <span>Còn lại: <strong style={{ color: event.availableTickets > 0 ? '#10b981' : '#ef4444' }}>{event.availableTickets}</strong></span>
-          <span>Tổng vé: {event.totalTickets}</span>
+          <span>C�n l?i: <strong style={{ color: event.availableTickets > 0 ? '#10b981' : '#ef4444' }}>{event.availableTickets}</strong></span>
+          <span>T?ng v�: {event.totalTickets}</span>
         </div>
       </div>
 
@@ -169,7 +172,7 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
               textTransform: 'uppercase'
             }}
           >
-            Số vé
+            S? v�
           </label>
           <input
             id={`quantity-${event.id}`}
@@ -215,7 +218,7 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
             if (event.availableTickets > 0) e.currentTarget.style.backgroundColor = '#006af5';
           }}
         >
-          {event.availableTickets > 0 ? 'Đặt vé ngay' : 'Hết vé'}
+          {event.availableTickets > 0 ? '�?t v� ngay' : 'H?t v�'}
         </button>
       </div>
     </article>

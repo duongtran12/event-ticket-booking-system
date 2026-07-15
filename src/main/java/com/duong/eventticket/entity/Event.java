@@ -30,6 +30,9 @@ public class Event {
     @Column(nullable = false, length = 255)
     private String location;
 
+    @Column(length = 2048)
+    private String imageUrl;
+
     @Column(nullable = false)
     private LocalDateTime dateTime;
 

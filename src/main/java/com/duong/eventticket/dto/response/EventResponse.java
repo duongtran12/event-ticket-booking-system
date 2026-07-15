@@ -14,6 +14,7 @@ public class EventResponse {
     private String title;
     private String description;
     private String location;
+    private String imageUrl;
     private LocalDateTime dateTime;
     private BigDecimal price;
     private Integer totalTickets;

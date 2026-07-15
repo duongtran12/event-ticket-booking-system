@@ -26,6 +26,9 @@ public class EventRequest {
     @Size(max = 255, message = "Location must not exceed 255 characters")
     private String location;
 
+    @Size(max = 2048, message = "Image URL must not exceed 2048 characters")
+    private String imageUrl;
+
     @NotNull(message = "Event date and time is required")
     @Future(message = "Event date must be in the future")
     private LocalDateTime dateTime;
