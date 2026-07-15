@@ -5,7 +5,8 @@ import { BookingCard } from './components/BookingCard';
 import { AuthForm } from './components/AuthForm';
 import { AdminForm } from './components/AdminForm';
 import { ProfilePage } from './components/ProfilePage';
-import { completePayment, createBooking, createEvent, createPayment, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, updateEvent } from './api';
+import { ProfileEditForm } from './components/ProfileEditForm';
+import { completePayment, createBooking, createEvent, createPayment, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, updateEvent, updateUserProfile } from './api';
 
 const PAGES = {
   HOME: 'home',
@@ -33,7 +34,8 @@ function App() {
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
   const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || '');
   const [profile, setProfile] = useState(null);
-  const [authValues, setAuthValues] = useState({ fullName: '', email: '', password: '' });
+  const [profileEditMode, setProfileEditMode] = useState(false);
+  const [authValues, setAuthValues] = useState({ fullName: '', email: '', password: '', phone: '', cccd: '', age: '', gender: '', avatarUrl: '' });
   const [authLoading, setAuthLoading] = useState(false);
   const [adminValues, setAdminValues] = useState({
     title: '',
@@ -113,7 +115,7 @@ function App() {
       setToken(data.token);
       setUserEmail(authValues.email);
       await loadProfile(data.token);
-      setAuthValues({ fullName: '', email: '', password: '' });
+      setAuthValues({ fullName: '', email: '', password: '', phone: '', cccd: '', age: '', gender: '', avatarUrl: '' });
       setMessage('Đăng nhập thành công!');
       setActivePage(PAGES.HOME);
     } catch (e) {
@@ -130,8 +132,12 @@ function App() {
     setMessage(null);
 
     try {
-      await registerUser(authValues.fullName, authValues.email, authValues.password);
-      setAuthValues({ fullName: '', email: '', password: '' });
+      const payload = {
+        ...authValues,
+        age: authValues.age ? Number(authValues.age) : null,
+      };
+      await registerUser(payload);
+      setAuthValues({ fullName: '', email: '', password: '', phone: '', cccd: '', age: '', gender: '', avatarUrl: '' });
       setMessage('Đăng ký thành công! Vui lòng đăng nhập.');
       setActivePage(PAGES.LOGIN);
     } catch (e) {
@@ -277,6 +283,27 @@ function App() {
     }
   };
 
+  const handleUpdateProfile = async (profileData) => {
+    setAuthLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const payload = {
+        ...profileData,
+        age: profileData.age ? Number(profileData.age) : null,
+      };
+      const updated = await updateUserProfile(token, payload);
+      setProfile(updated);
+      setMessage('Cập nhật hồ sơ thành công.');
+      setProfileEditMode(false);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const handleBookTicket = async (eventId) => {
     if (!isAuthenticated) {
       setError('Bạn cần đăng nhập để đặt vé.');
@@ -410,8 +437,21 @@ function App() {
           <div className={`alert ${message ? 'success' : 'danger'}`}>{message || error}</div>
         )}
 
-        {activePage === PAGES.PROFILE && (
-          <ProfilePage profile={profile} isAdmin={isAdmin} onGoAdmin={() => setActivePage(PAGES.ADMIN)} />
+        {activePage === PAGES.PROFILE && !profileEditMode && (
+          <ProfilePage
+            profile={profile}
+            isAdmin={isAdmin}
+            onGoAdmin={() => setActivePage(PAGES.ADMIN)}
+            onEdit={() => setProfileEditMode(true)}
+          />
+        )}
+        {activePage === PAGES.PROFILE && profileEditMode && (
+          <ProfileEditForm
+            profile={profile}
+            onSave={handleUpdateProfile}
+            loading={authLoading}
+            onCancel={() => setProfileEditMode(false)}
+          />
         )}
 
         {activePage === PAGES.HOME && (
@@ -798,7 +838,19 @@ function App() {
             ) : (
               <>
                 <div className="admin-grid">
-                  <div className="admin-panel">
+                  <div
+                    className="admin-panel"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '16px',
+                      // Kéo dài chiều cao tối thiểu của panel xuống thêm 50px
+                      minHeight: 'calc(100% + 10px)',
+                      // Hoặc tăng padding đáy thêm 50px để tạo khoảng trống bên dưới form
+                      paddingBottom: '30px',
+                      boxSizing: 'border-box'
+                    }}
+                  >
                     <AdminForm
                       values={adminValues}
                       onChange={updateAdminValues}
@@ -807,7 +859,25 @@ function App() {
                       submitLabel={selectedEvent ? 'Cập nhật sự kiện' : 'Tạo sự kiện'}
                     />
                     {selectedEvent && (
-                      <button className="secondary" type="button" onClick={handleCancelEdit}>
+                      <button
+                        className="secondary"
+                        type="button"
+                        onClick={handleCancelEdit}
+                        style={{
+                          width: '100%',
+                          height: '42px',
+                          background: '#f1f5f9',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          color: '#475569',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'background 0.2s',
+                          marginTop: '-8px'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.background = '#e2e8f0'}
+                        onMouseOut={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                      >
                         Hủy chỉnh sửa
                       </button>
                     )}
@@ -841,8 +911,8 @@ function App() {
                           <strong>{adminStats.soldBookings}</strong>
                         </article>
                         <article className="stat-card admin-stat-card">
-                          <span>Khả dụng</span>
-                          <strong>{adminStats.availableBookings}</strong>
+                          <span>Vé khả dụng</span>
+                          <strong>{adminStats.availableTickets}</strong>
                         </article>
                         <article className="stat-card admin-stat-card">
                           <span>Doanh thu đã xác nhận</span>

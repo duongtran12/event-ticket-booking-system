@@ -11,4 +11,9 @@ public class UserProfileResponse {
     private String fullName;
     private String email;
     private String role;
+    private String phone;
+    private String cccd;
+    private Integer age;
+    private String gender;
+    private String avatarUrl;
 }

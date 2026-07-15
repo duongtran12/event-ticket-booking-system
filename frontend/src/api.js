@@ -51,13 +51,13 @@ export async function loginUser(email, password) {
   return handleResponse(response);
 }
 
-export async function registerUser(fullName, email, password) {
+export async function registerUser(userData) {
   const response = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ fullName, email, password }),
+    body: JSON.stringify(userData),
   });
 
   return handleResponse(response);
@@ -68,6 +68,19 @@ export async function getUserProfile(token) {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  });
+
+  return handleResponse(response);
+}
+
+export async function updateUserProfile(token, profileData) {
+  const response = await fetch(`${API_BASE}/auth/me`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData),
   });
 
   return handleResponse(response);

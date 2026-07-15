@@ -24,4 +24,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Event e WHERE e.id = :id")
     Optional<Event> findByIdWithLock(@Param("id") Long id);
+
+    @Query("SELECT COALESCE(SUM(e.availableTickets), 0) FROM Event e")
+    long sumAvailableTickets();
 }

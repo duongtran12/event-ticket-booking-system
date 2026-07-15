@@ -13,6 +13,6 @@ public class AdminStatsResponse {
     private long totalBookings;
     private long reservedBookings;
     private long soldBookings;
-    private long availableBookings;
+    private long availableTickets;
     private BigDecimal totalRevenue;
 }

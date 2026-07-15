@@ -29,4 +29,18 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @Column(length = 20)
+    private String phone;
+
+    @Column(length = 20)
+    private String cccd;
+
+    private Integer age;
+
+    @Column(length = 20)
+    private String gender;
+
+    @Column(length = 2048)
+    private String avatarUrl;
+
 }

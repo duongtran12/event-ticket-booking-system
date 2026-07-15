@@ -26,7 +26,7 @@ public class AdminStatsServiceImpl implements AdminStatsService {
         long totalBookings = bookingRepository.count();
         long reservedBookings = bookingRepository.countByStatus(BookingStatus.RESERVED);
         long soldBookings = bookingRepository.countByStatus(BookingStatus.SOLD);
-        long availableBookings = bookingRepository.countByStatus(BookingStatus.AVAILABLE);
+        long availableTickets = eventRepository.sumAvailableTickets();
         java.math.BigDecimal totalRevenue = bookingRepository.sumTotalPriceByStatus(BookingStatus.SOLD);
 
         return new AdminStatsResponse(
@@ -35,7 +35,7 @@ public class AdminStatsServiceImpl implements AdminStatsService {
                 totalBookings,
                 reservedBookings,
                 soldBookings,
-                availableBookings,
+                availableTickets,
                 totalRevenue
         );
     }
