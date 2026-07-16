@@ -844,11 +844,10 @@ function App() {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '16px',
-                      // Kéo dài chiều cao tối thiểu của panel xuống thêm 50px
                       minHeight: 'calc(100% + 10px)',
-                      // Hoặc tăng padding đáy thêm 50px để tạo khoảng trống bên dưới form
                       paddingBottom: '30px',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      marginTop: '30px'
                     }}
                   >
                     <AdminForm
@@ -873,7 +872,7 @@ function App() {
                           fontWeight: '600',
                           cursor: 'pointer',
                           transition: 'background 0.2s',
-                          marginTop: '-8px'
+                          marginTop: '-8px',
                         }}
                         onMouseOver={(e) => e.currentTarget.style.background = '#e2e8f0'}
                         onMouseOut={(e) => e.currentTarget.style.background = '#f1f5f9'}
@@ -883,7 +882,7 @@ function App() {
                     )}
                   </div>
 
-                  <div className="admin-events">
+                  <div className="admin-events" style={{marginTop: '50px'}}>
                     <div className="section-heading">
                       <h2>Thống kê quản trị</h2>
                       <p>Thông tin tổng quan về người dùng, sự kiện và đặt vé.</p>
