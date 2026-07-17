@@ -1,6 +1,7 @@
 package com.duong.eventticket.controller;
 
 import com.duong.eventticket.dto.request.BookingRequest;
+import com.duong.eventticket.dto.request.CancelBookingRequest;
 import com.duong.eventticket.dto.response.BookingResponse;
 import com.duong.eventticket.service.BookingService;
 import jakarta.validation.Valid;
@@ -66,10 +67,14 @@ public class BookingController {
     @Operation(summary = "Cancel a booking")
     public ResponseEntity<BookingResponse> cancelBooking(
             @PathVariable Long id,
-            Authentication authentication
+            Authentication authentication,
+            @RequestBody(required = false) CancelBookingRequest request
     ) {
         String userEmail = authentication.getName();
-        BookingResponse response = bookingService.cancelBooking(userEmail, id);
+        String reason = request != null && request.getReason() != null && !request.getReason().isBlank()
+                ? request.getReason().trim()
+                : "Hủy bởi người dùng";
+        BookingResponse response = bookingService.cancelBooking(userEmail, id, reason);
         return ResponseEntity.ok(response);
     }
 

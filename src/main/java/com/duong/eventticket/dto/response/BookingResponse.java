@@ -18,6 +18,7 @@ public class BookingResponse {
     private Integer quantity;
     private BigDecimal totalPrice;
     private String status;
+    private String cancelReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

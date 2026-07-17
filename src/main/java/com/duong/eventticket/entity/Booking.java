@@ -39,6 +39,9 @@ public class Booking {
     @Column(nullable = false, length = 20)
     private BookingStatus status;
 
+    @Column(length = 500)
+    private String cancelReason;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

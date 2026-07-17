@@ -23,4 +23,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT COALESCE(SUM(b.totalPrice), 0) FROM Booking b WHERE b.status = :status")
     java.math.BigDecimal sumTotalPriceByStatus(@Param("status") BookingStatus status);
+
+    @Query("SELECT COALESCE(SUM(b.totalPrice), 0) FROM Booking b WHERE b.status = :status AND b.createdAt >= :from")
+    java.math.BigDecimal sumTotalPriceByStatusSince(@Param("status") BookingStatus status, @Param("from") LocalDateTime from);
+
+    @Query("SELECT COALESCE(COUNT(DISTINCT b.user.id), 0) FROM Booking b WHERE b.createdAt >= :from")
+    long countDistinctUserByCreatedAtAfter(@Param("from") LocalDateTime from);
+
+    @Query("SELECT b.event.title FROM Booking b WHERE b.status = :status GROUP BY b.event.id, b.event.title ORDER BY SUM(b.quantity) DESC")
+    List<String> findTopEventTitleByStatus(@Param("status") BookingStatus status, Pageable pageable);
 }

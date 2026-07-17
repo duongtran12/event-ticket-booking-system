@@ -50,16 +50,12 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponse createBooking(String userEmail, BookingRequest request) {
 
-        // 1. Tìm user đang đăng nhập
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // 2. Khóa dòng Event lại (Pessimistic Lock) để tránh Race Condition
-        //    Không có giao dịch nào khác có thể đọc/ghi dòng này cho đến khi transaction này kết thúc
         Event event = eventRepository.findByIdWithLock(request.getEventId())
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + request.getEventId()));
 
-        // 3. Kiểm tra số lượng vé còn lại
         if (event.getAvailableTickets() < request.getQuantity()) {
             throw new IllegalArgumentException(
                     "Not enough tickets available. Requested: " + request.getQuantity()
@@ -67,11 +63,9 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        // 4. Trừ số vé khả dụng để chuyển sang trạng thái giữ chỗ
         event.setAvailableTickets(event.getAvailableTickets() - request.getQuantity());
         eventRepository.save(event);
 
-        // 5. Tính tổng tiền và tạo booking ở trạng thái RESERVED
         BigDecimal totalPrice = event.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
 
         Booking booking = new Booking();
@@ -101,7 +95,6 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
-        // Chỉ chủ nhân booking hoặc Admin mới được xem
         if (!booking.getUser().getEmail().equals(userEmail)) {
             throw new AccessDeniedException("You do not have permission to view this booking");
         }
@@ -139,7 +132,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingResponse cancelBooking(String userEmail, Long bookingId) {
+    public BookingResponse cancelBooking(String userEmail, Long bookingId, String reason) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
@@ -155,15 +148,14 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        // Hoàn lại số vé cho sự kiện
         Event event = eventRepository.findByIdWithLock(booking.getEvent().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
         event.setAvailableTickets(event.getAvailableTickets() + booking.getQuantity());
         eventRepository.save(event);
 
-        // Cập nhật trạng thái booking thành AVAILABLE
-        booking.setStatus(BookingStatus.AVAILABLE);
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setCancelReason(reason);
         Booking cancelledBooking = bookingRepository.save(booking);
 
         return mapToResponse(cancelledBooking);
@@ -304,6 +296,7 @@ public class BookingServiceImpl implements BookingService {
         response.setStatus(booking.getStatus().name());
         response.setCreatedAt(booking.getCreatedAt());
         response.setUpdatedAt(booking.getUpdatedAt());
+        response.setCancelReason(booking.getCancelReason());
         return response;
     }
 }

@@ -15,4 +15,9 @@ public class AdminStatsResponse {
     private long soldBookings;
     private long availableTickets;
     private BigDecimal totalRevenue;
+    private long activeUsers;
+    private String topEvent;
+    private BigDecimal dailyRevenue;
+    private BigDecimal weeklyRevenue;
+    private BigDecimal monthlyRevenue;
 }

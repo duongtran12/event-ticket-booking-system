@@ -16,7 +16,7 @@ public interface BookingService {
 
     BookingResponse getBookingById(String userEmail, Long bookingId);
 
-    BookingResponse cancelBooking(String userEmail, Long bookingId);
+    BookingResponse cancelBooking(String userEmail, Long bookingId, String reason);
 
     String createPaymentUrl(String userEmail, Long bookingId, String clientIp);
 
