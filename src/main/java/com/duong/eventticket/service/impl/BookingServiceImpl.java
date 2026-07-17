@@ -63,6 +63,10 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
+        if (event.getDateTime().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new IllegalArgumentException("Không thể đặt vé khi còn dưới 2 tiếng trước giờ diễn.");
+        }
+
         event.setAvailableTickets(event.getAvailableTickets() - request.getQuantity());
         eventRepository.save(event);
 
@@ -289,8 +293,14 @@ public class BookingServiceImpl implements BookingService {
         response.setId(booking.getId());
         response.setEventId(booking.getEvent().getId());
         response.setEventTitle(booking.getEvent().getTitle());
+        response.setEventLocation(booking.getEvent().getLocation());
+        response.setEventDateTime(booking.getEvent().getDateTime());
+        response.setEventPrice(booking.getEvent().getPrice());
         response.setUserId(booking.getUser().getId());
         response.setUserEmail(booking.getUser().getEmail());
+        response.setBuyerName(booking.getUser().getFullName());
+        response.setBuyerPhone(booking.getUser().getPhone());
+        response.setBuyerCccd(booking.getUser().getCccd());
         response.setQuantity(booking.getQuantity());
         response.setTotalPrice(booking.getTotalPrice());
         response.setStatus(booking.getStatus().name());

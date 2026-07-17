@@ -33,6 +33,23 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem('jwtToken') || '');
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
   const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || '');
+
+  const getSavedEventsKey = (email) => (email ? `savedEventIds_${email}` : 'savedEventIds_guest');
+  const loadSavedEvents = (email) => {
+    try {
+      return JSON.parse(localStorage.getItem(getSavedEventsKey(email)) || '[]');
+    } catch {
+      return [];
+    }
+  };
+  const saveSavedEvents = (email, ids) => {
+    try {
+      localStorage.setItem(getSavedEventsKey(email), JSON.stringify(ids));
+    } catch {
+      // ignore localStorage failures
+    }
+  };
+
   const [profile, setProfile] = useState(null);
   const [profileEditMode, setProfileEditMode] = useState(false);
   const [authValues, setAuthValues] = useState({ fullName: '', email: '', password: '', phone: '', cccd: '', age: '', gender: '', avatarUrl: '' });
@@ -50,17 +67,15 @@ function App() {
   const [adminStats, setAdminStats] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [savedEventIds, setSavedEventIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('savedEventIds') || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const [savedEventIds, setSavedEventIds] = useState(() => loadSavedEvents(localStorage.getItem('userEmail') || ''));
   const [bookingsView, setBookingsView] = useState('history');
 
   const isAuthenticated = !!token;
   const isAdmin = userRole === 'ROLE_ADMIN';
+
+  useEffect(() => {
+    setSavedEventIds(loadSavedEvents(userEmail));
+  }, [userEmail]);
 
   useEffect(() => {
     if (token) {
@@ -122,6 +137,7 @@ function App() {
       localStorage.setItem('userEmail', authValues.email);
       setToken(data.token);
       setUserEmail(authValues.email);
+      setSavedEventIds(loadSavedEvents(authValues.email));
       await loadProfile(data.token);
       setAuthValues({ fullName: '', email: '', password: '', phone: '', cccd: '', age: '', gender: '', avatarUrl: '' });
       setMessage('Đăng nhập thành công!');
@@ -276,6 +292,7 @@ function App() {
     setUserEmail('');
     setUserRole('');
     setProfile(null);
+    setSavedEventIds(loadSavedEvents(''));
     setMessage('Bạn đã đăng xuất.');
     setActivePage(PAGES.HOME);
   };
@@ -325,8 +342,15 @@ function App() {
 
     try {
       const booking = await createBooking(token, eventId, quantity);
-      setMessage(`Đã giữ chỗ vé cho ${booking.eventTitle}. Vui lòng thanh toán để hoàn tất.`);
+      setMessage(`Đã giữ chỗ vé cho ${booking.eventTitle}. Vui lòng thanh toán trong 10 phút để giữ vé.`);
       setBookingQuantities((current) => ({ ...current, [eventId]: 1 }));
+      setEvents((currentEvents) =>
+        currentEvents.map((event) =>
+          event.id === eventId
+            ? { ...event, availableTickets: Math.max((event.availableTickets || 0) - quantity, 0) }
+            : event
+        )
+      );
       if (activePage === PAGES.BOOKINGS) {
         fetchBookings();
       }
@@ -351,8 +375,15 @@ function App() {
     setMessage(null);
 
     try {
-      await cancelBooking(token, bookingId, reason.trim() || 'Hủy bởi người dùng');
+      const cancelledBooking = await cancelBooking(token, bookingId, reason.trim() || 'Hủy bởi người dùng');
       setMessage('Vé đã được hủy và trả về pool vé khả dụng.');
+      setEvents((currentEvents) =>
+        currentEvents.map((event) =>
+          event.id === cancelledBooking.eventId
+            ? { ...event, availableTickets: Math.max((event.availableTickets || 0) + cancelledBooking.quantity, 0) }
+            : event
+        )
+      );
       fetchBookings();
       if (activePage === PAGES.HOME) {
         fetchEvents();
@@ -367,7 +398,7 @@ function App() {
       const next = current.includes(eventId)
         ? current.filter((id) => id !== eventId)
         : [...current, eventId];
-      localStorage.setItem('savedEventIds', JSON.stringify(next));
+      saveSavedEvents(userEmail || '', next);
       return next;
     });
   };
@@ -643,7 +674,6 @@ function App() {
                 </button>
               </form>
 
-              {/* Sort and Stats panel */}
               <div
                 className="sort-panel"
                 style={{
@@ -696,13 +726,10 @@ function App() {
                   <span style={{ fontWeight: '600', color: '#0f172a' }}>
                     {totalEventsCount.toLocaleString('vi-VN')} sự kiện
                   </span>
-                  <span style={{ width: '1px', height: '14px', background: '#cbd5e1' }}></span>
-                  <span>Trang {page + 1} / {Math.max(totalPages, 1)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Section 3: Content (Grid / Loading / Empty states) */}
             {loading ? (
               <div
                 className="message-panel"

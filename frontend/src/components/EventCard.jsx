@@ -1,5 +1,8 @@
 export function EventCard({ event, quantity, onQuantityChange, onBook, isSaved, onToggleSave }) {
   const priceValue = event.price ? Number(event.price) : 0;
+  const eventDate = event.dateTime ? new Date(event.dateTime) : null;
+  const isClosed = eventDate ? eventDate.getTime() - Date.now() <= 2 * 60 * 60 * 1000 : false;
+  const canBook = event.availableTickets > 0 && !isClosed;
   return (
     <article 
       className="event-card"
@@ -220,30 +223,35 @@ export function EventCard({ event, quantity, onQuantityChange, onBook, isSaved, 
         
         <button 
           type="button" 
-          onClick={() => onBook(event.id)} 
-          disabled={event.availableTickets <= 0}
+          onClick={() => canBook && onBook(event.id)} 
+          disabled={!canBook}
           style={{
             flex: 1,
             height: '42px',
-            backgroundColor: event.availableTickets > 0 ? '#006af5' : '#cbd5e1',
+            backgroundColor: canBook ? '#006af5' : '#cbd5c7',
             color: '#ffffff',
             border: 'none',
             borderRadius: '8px',
             fontSize: '14px',
             fontWeight: '600',
-            cursor: event.availableTickets > 0 ? 'pointer' : 'not-allowed',
+            cursor: canBook ? 'pointer' : 'not-allowed',
             transition: 'background 0.2s ease'
           }}
           onMouseOver={(e) => {
-            if (event.availableTickets > 0) e.currentTarget.style.backgroundColor = '#0056c6';
+            if (canBook) e.currentTarget.style.backgroundColor = '#0056c6';
           }}
           onMouseOut={(e) => {
-            if (event.availableTickets > 0) e.currentTarget.style.backgroundColor = '#006af5';
+            if (canBook) e.currentTarget.style.backgroundColor = '#006af5';
           }}
         >
-          {event.availableTickets > 0 ? 'Đặt vé ngay' : 'Hết vé'}
+          {event.availableTickets <= 0 ? 'Hết vé' : isClosed ? 'Đã đóng' : 'Đặt vé ngay'}
         </button>
       </div>
+      {isClosed && event.availableTickets > 0 && (
+        <div style={{ padding: '14px 20px', borderTop: '1px solid #e2e8f0', color: '#b91c1c', fontWeight: '600', fontSize: '13px', textAlign: 'center' }}>
+          Đã đóng cổng bán vé
+        </div>
+      )}
     </article>
   );
 }

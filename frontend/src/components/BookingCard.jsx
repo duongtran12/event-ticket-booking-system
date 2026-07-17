@@ -92,6 +92,31 @@ export function BookingCard({ booking, onPay, onCancel }) {
           gap: '12px'
         }}
       >
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+          <div>
+            <span style={{ fontSize: '13px', color: '#6b7280' }}>Địa điểm</span>
+            <p style={{ margin: '6px 0 0', fontSize: '15px', fontWeight: '600', color: '#1f2937' }}>{booking.eventLocation || '---'}</p>
+          </div>
+          <div>
+            <span style={{ fontSize: '13px', color: '#6b7280' }}>Thời gian</span>
+            <p style={{ margin: '6px 0 0', fontSize: '15px', fontWeight: '600', color: '#1f2937' }}>
+              {booking.eventDateTime ? new Date(booking.eventDateTime).toLocaleString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+              }) : '---'}
+            </p>
+          </div>
+          <div>
+            <span style={{ fontSize: '13px', color: '#6b7280' }}>Giá vé</span>
+            <p style={{ margin: '6px 0 0', fontSize: '15px', fontWeight: '700', color: '#ef4444' }}>
+              {Number(booking.eventPrice || 0).toLocaleString('vi-VN')}₫
+            </p>
+          </div>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '15px', color: '#6b7280' }}>Số lượng vé:</span>
           <span style={{ fontSize: '15px', fontWeight: '600', color: '#1f2937' }}>{booking.quantity} vé</span>
@@ -116,6 +141,33 @@ export function BookingCard({ booking, onPay, onCancel }) {
             {totalPrice.toLocaleString('vi-VN')}₫
           </span>
         </div>
+
+        {booking.status === 'SOLD' && (
+          <div style={{ marginTop: '12px', padding: '16px', borderRadius: '18px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+            <p style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '700', color: '#0f172a' }}>Thông tin người mua</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+              <div>
+                <span style={{ fontSize: '13px', color: '#64748b' }}>Họ tên</span>
+                <p style={{ margin: '6px 0 0', fontSize: '15px', color: '#1f2937' }}>{booking.buyerName || booking.userEmail}</p>
+              </div>
+              <div>
+                <span style={{ fontSize: '13px', color: '#64748b' }}>SĐT</span>
+                <p style={{ margin: '6px 0 0', fontSize: '15px', color: '#1f2937' }}>{booking.buyerPhone || '---'}</p>
+              </div>
+              <div>
+                <span style={{ fontSize: '13px', color: '#64748b' }}>CCCD</span>
+                <p style={{ margin: '6px 0 0', fontSize: '15px', color: '#1f2937' }}>{booking.buyerCccd || '---'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {booking.status === 'CANCELLED' && booking.cancelReason && (
+          <div style={{ marginTop: '12px', padding: '14px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+            <span style={{ display: 'block', fontSize: '14px', color: '#475569', marginBottom: '6px', fontWeight: '600' }}>Lý do hủy vé:</span>
+            <p style={{ margin: 0, fontSize: '15px', color: '#334155', lineHeight: '1.6' }}>{booking.cancelReason}</p>
+          </div>
+        )}
       </div>
 
       {booking.status === 'RESERVED' && (
