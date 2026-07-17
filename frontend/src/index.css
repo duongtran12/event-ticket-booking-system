@@ -702,6 +702,47 @@ button {
     color: #0f172a;
   }
 
+  .admin-analytics-panel {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 20px;
+  }
+
+  .analytics-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 22px;
+  }
+
+  .analytics-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .analytics-card-header span {
+    font-size: 0.95rem;
+    color: #64748b;
+  }
+
+  .analytics-bar {
+    background: #e2e8f0;
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+  }
+
+  .analytics-bar-fill {
+    background: linear-gradient(90deg, #2563eb, #0ea5e9);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.35s ease;
+  }
+
   .admin-event-list {
     display: grid;
     gap: 16px;

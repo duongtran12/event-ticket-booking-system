@@ -6,7 +6,7 @@ import { AuthForm } from './components/AuthForm';
 import { AdminForm } from './components/AdminForm';
 import { ProfilePage } from './components/ProfilePage';
 import { ProfileEditForm } from './components/ProfileEditForm';
-import { completePayment, createBooking, createEvent, createPayment, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, updateEvent, updateUserProfile } from './api';
+import { completePayment, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, updateEvent, updateUserProfile } from './api';
 
 const PAGES = {
   HOME: 'home',
@@ -50,6 +50,14 @@ function App() {
   const [adminStats, setAdminStats] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const [savedEventIds, setSavedEventIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('savedEventIds') || '[]');
+    } catch {
+      return [];
+    }
+  });
+  const [bookingsView, setBookingsView] = useState('history');
 
   const isAuthenticated = !!token;
   const isAdmin = userRole === 'ROLE_ADMIN';
@@ -325,6 +333,43 @@ function App() {
     } catch (e) {
       setError(e.message);
     }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!isAuthenticated) {
+      setError('Bạn cần đăng nhập để hủy vé.');
+      setActivePage(PAGES.LOGIN);
+      return;
+    }
+
+    const reason = window.prompt('Nhập lý do hủy vé (tùy chọn):', 'Hủy vì thay đổi kế hoạch');
+    if (reason === null) {
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+
+    try {
+      await cancelBooking(token, bookingId, reason.trim() || 'Hủy bởi người dùng');
+      setMessage('Vé đã được hủy và trả về pool vé khả dụng.');
+      fetchBookings();
+      if (activePage === PAGES.HOME) {
+        fetchEvents();
+      }
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const handleToggleSaveEvent = (eventId) => {
+    setSavedEventIds((current) => {
+      const next = current.includes(eventId)
+        ? current.filter((id) => id !== eventId)
+        : [...current, eventId];
+      localStorage.setItem('savedEventIds', JSON.stringify(next));
+      return next;
+    });
   };
 
   const handlePayBooking = async (bookingId) => {
@@ -713,6 +758,8 @@ function App() {
                       quantity={bookingQuantities[event.id] || 1}
                       onQuantityChange={handleQuantityChange}
                       onBook={handleBookTicket}
+                      isSaved={savedEventIds.includes(event.id)}
+                      onToggleSave={handleToggleSaveEvent}
                     />
                   ))}
                 </div>
@@ -814,19 +861,88 @@ function App() {
         {activePage === PAGES.BOOKINGS && (
           <section>
             <div className="section-heading">
-              <h2>Lịch sử đặt vé</h2>
-              <p>Xem lại các đơn đặt và tình trạng vé của bạn.</p>
+              <h2>Vé của tôi</h2>
+              <p>Xem danh sách vé hoặc chuyển sang vé lưu trữ.</p>
             </div>
             {!isAuthenticated ? (
-              <div className="message-panel">Vui lòng đăng nhập để xem lịch sử đặt vé.</div>
-            ) : bookings.length === 0 ? (
-              <div className="message-panel">Bạn chưa có đơn đặt vé nào.</div>
+              <div className="message-panel">Vui lòng đăng nhập để xem vé của bạn.</div>
             ) : (
-              <div className="booking-list">
-                {bookings.map((booking) => (
-                  <BookingCard key={booking.id} booking={booking} onPay={handlePayBooking} />
-                ))}
-              </div>
+              <>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setBookingsView('history')}
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '9999px',
+                      border: bookingsView === 'history' ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                      background: bookingsView === 'history' ? '#eff6ff' : '#ffffff',
+                      color: bookingsView === 'history' ? '#1d4ed8' : '#475569',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Lịch sử vé
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBookingsView('saved')}
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '9999px',
+                      border: bookingsView === 'saved' ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                      background: bookingsView === 'saved' ? '#eff6ff' : '#ffffff',
+                      color: bookingsView === 'saved' ? '#1d4ed8' : '#475569',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Vé lưu trữ
+                  </button>
+                </div>
+
+                {bookingsView === 'history' ? (
+                  bookings.length === 0 ? (
+                    <div className="message-panel">Bạn chưa có đơn đặt vé nào.</div>
+                  ) : (
+                    <div className="booking-list">
+                      {bookings.map((booking) => (
+                        <BookingCard key={booking.id} booking={booking} onPay={handlePayBooking} onCancel={handleCancelBooking} />
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <>
+                    {events.filter((event) => savedEventIds.includes(event.id)).length === 0 ? (
+                      <div className="message-panel">Bạn chưa lưu trữ sự kiện nào.</div>
+                    ) : (
+                      <div
+                        className="event-grid"
+                        style={{
+                          display: 'grid',
+                          justifyItems: 'stretch',
+                          alignItems: 'stretch',
+                          gap: '30px',
+                          marginBottom: '40px',
+                          width: '100%'
+                        }}
+                      >
+                        {events.filter((event) => savedEventIds.includes(event.id)).map((event) => (
+                          <EventCard
+                            key={event.id}
+                            event={event}
+                            quantity={bookingQuantities[event.id] || 1}
+                            onQuantityChange={handleQuantityChange}
+                            onBook={handleBookTicket}
+                            isSaved={savedEventIds.includes(event.id)}
+                            onToggleSave={handleToggleSaveEvent}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </section>
         )}
@@ -888,36 +1004,75 @@ function App() {
                       <p>Thông tin tổng quan về người dùng, sự kiện và đặt vé.</p>
                     </div>
                     {adminStats ? (
-                      <div className="admin-stats-grid">
-                        <article className="stat-card admin-stat-card">
-                          <span>Tổng người dùng</span>
-                          <strong>{adminStats.totalUsers}</strong>
-                        </article>
-                        <article className="stat-card admin-stat-card">
-                          <span>Tổng sự kiện</span>
-                          <strong>{adminStats.totalEvents}</strong>
-                        </article>
-                        <article className="stat-card admin-stat-card">
-                          <span>Tổng đơn đặt</span>
-                          <strong>{adminStats.totalBookings}</strong>
-                        </article>
-                        <article className="stat-card admin-stat-card">
-                          <span>Đang giữ chỗ</span>
-                          <strong>{adminStats.reservedBookings}</strong>
-                        </article>
-                        <article className="stat-card admin-stat-card">
-                          <span>Đã bán</span>
-                          <strong>{adminStats.soldBookings}</strong>
-                        </article>
-                        <article className="stat-card admin-stat-card">
-                          <span>Vé khả dụng</span>
-                          <strong>{adminStats.availableTickets}</strong>
-                        </article>
-                        <article className="stat-card admin-stat-card">
-                          <span>Doanh thu đã xác nhận</span>
-                          <strong>{Number(adminStats.totalRevenue || 0).toLocaleString('vi-VN')} đ</strong>
-                        </article>
-                      </div>
+                      <>
+                        <div className="admin-stats-grid">
+                          <article className="stat-card admin-stat-card">
+                            <span>Tổng người dùng</span>
+                            <strong>{adminStats.totalUsers}</strong>
+                          </article>
+                          <article className="stat-card admin-stat-card">
+                            <span>Tổng sự kiện</span>
+                            <strong>{adminStats.totalEvents}</strong>
+                          </article>
+                          <article className="stat-card admin-stat-card">
+                            <span>Tổng đơn đặt</span>
+                            <strong>{adminStats.totalBookings}</strong>
+                          </article>
+                          <article className="stat-card admin-stat-card">
+                            <span>Đang giữ chỗ</span>
+                            <strong>{adminStats.reservedBookings}</strong>
+                          </article>
+                          <article className="stat-card admin-stat-card">
+                            <span>Đã bán</span>
+                            <strong>{adminStats.soldBookings}</strong>
+                          </article>
+                          <article className="stat-card admin-stat-card">
+                            <span>Vé khả dụng</span>
+                            <strong>{adminStats.availableTickets}</strong>
+                          </article>
+                          <article className="stat-card admin-stat-card">
+                            <span>Doanh thu đã xác nhận</span>
+                            <strong>{Number(adminStats.totalRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                          </article>
+                          <article className="stat-card admin-stat-card">
+                            <span>Người dùng hoạt động (7 ngày)</span>
+                            <strong>{adminStats.activeUsers}</strong>
+                          </article>
+                          <article className="stat-card admin-stat-card">
+                            <span>Sự kiện bán chạy nhất</span>
+                            <strong>{adminStats.topEvent || 'Chưa có dữ liệu'}</strong>
+                          </article>
+                        </div>
+                        <div className="admin-analytics-panel">
+                          <div className="analytics-card">
+                            <div className="analytics-card-header">
+                              <span>Doanh thu hôm nay</span>
+                              <strong>{Number(adminStats.dailyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                            </div>
+                            <div className="analytics-bar">
+                              <div className="analytics-bar-fill" style={{ width: `${Math.min(Number(adminStats.dailyRevenue || 0) / Math.max(Number(adminStats.monthlyRevenue || 1), 1) * 100, 100)}%` }} />
+                            </div>
+                          </div>
+                          <div className="analytics-card">
+                            <div className="analytics-card-header">
+                              <span>Doanh thu tuần</span>
+                              <strong>{Number(adminStats.weeklyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                            </div>
+                            <div className="analytics-bar">
+                              <div className="analytics-bar-fill" style={{ width: `${Math.min(Number(adminStats.weeklyRevenue || 0) / Math.max(Number(adminStats.monthlyRevenue || 1), 1) * 100, 100)}%` }} />
+                            </div>
+                          </div>
+                          <div className="analytics-card">
+                            <div className="analytics-card-header">
+                              <span>Doanh thu tháng</span>
+                              <strong>{Number(adminStats.monthlyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                            </div>
+                            <div className="analytics-bar">
+                              <div className="analytics-bar-fill" style={{ width: "100%" }} />
+                            </div>
+                          </div>
+                        </div>
+                      </>
                     ) : (
                       <div className="message-panel">Đang tải thống kê...</div>
                     )}

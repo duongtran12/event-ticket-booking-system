@@ -1,4 +1,4 @@
-export function BookingCard({ booking, onPay }) {
+export function BookingCard({ booking, onPay, onCancel }) {
   const totalPrice = booking.totalPrice ? Number(booking.totalPrice) : 0;
   const statusClass = (booking.status || '').toLowerCase();
 
@@ -119,35 +119,64 @@ export function BookingCard({ booking, onPay }) {
       </div>
 
       {booking.status === 'RESERVED' && (
-        <button
-          type="button"
-          className="primary"
-          onClick={() => onPay(booking.id)}
-          style={{
-            width: '100%',
-            backgroundColor: '#006af5',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '14px 16px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            outline: 'none',
-            boxShadow: '0 4px 12px rgba(0, 106, 245, 0.2)'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = '#0056c6';
-            e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 106, 245, 0.3)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = '#006af5';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 106, 245, 0.2)';
-          }}
-        >
-          Thanh toán qua VNPay
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => onPay(booking.id)}
+            style={{
+              width: '100%',
+              backgroundColor: '#006af5',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '14px 16px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              outline: 'none',
+              boxShadow: '0 4px 12px rgba(0, 106, 245, 0.2)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#0056c6';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 106, 245, 0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#006af5';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 106, 245, 0.2)';
+            }}
+          >
+            Thanh toán qua VNPay
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => onCancel?.(booking.id)}
+            style={{
+              width: '100%',
+              backgroundColor: '#ef4444',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '14px 16px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              outline: 'none',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#dc2626';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#ef4444';
+            }}
+          >
+            Hủy vé
+          </button>
+        </div>
       )}
     </article>
   );

@@ -1,9 +1,10 @@
-export function EventCard({ event, quantity, onQuantityChange, onBook }) {
+export function EventCard({ event, quantity, onQuantityChange, onBook, isSaved, onToggleSave }) {
   const priceValue = event.price ? Number(event.price) : 0;
   return (
     <article 
       className="event-card"
       style={{
+        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         background: '#ffffff',
@@ -21,7 +22,8 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
           style={{
             width: '100%',
             height: '200px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            position: 'relative'
           }}
         >
           <img 
@@ -34,6 +36,30 @@ export function EventCard({ event, quantity, onQuantityChange, onBook }) {
               objectFit: 'cover'
             }}
           />
+          <button
+            type="button"
+            onClick={() => onToggleSave?.(event.id)}
+            title={isSaved ? 'Bỏ lưu trữ' : 'Lưu trữ sự kiện'}
+            style={{
+              position: 'absolute',
+              top: '14px',
+              right: '14px',
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              border: '1px solid rgba(255,255,255,0.7)',
+              background: isSaved ? '#fbbf24' : 'rgba(255,255,255,0.85)',
+              color: isSaved ? '#ffffff' : '#64748b',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              cursor: 'pointer',
+              boxShadow: '0 10px 20px rgba(15, 23, 42, 0.16)'
+            }}
+          >
+            ★
+          </button>
         </div>
       )}
       
