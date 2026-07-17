@@ -31,3 +31,15 @@ build/
 
 ### VS Code ###
 .vscode/
+# Chặn thư mục thư viện của React
+frontend/node_modules/
+
+# Chặn thư mục build của React
+frontend/dist/
+
+# Chặn thư mục build của Spring Boot
+target/
+
+# Chặn file cấu hình IDE cá nhân (nếu chưa có)
+.idea/
+*.class

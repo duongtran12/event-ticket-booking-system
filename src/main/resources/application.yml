@@ -26,7 +26,7 @@ jwt:
   expiration: 86400000
 
 vnpay:
-  tmnCode: ${VNPAY_TMN_CODE:}
-  hashSecret: ${VNPAY_HASH_SECRET:}
-  payUrl: ${VNPAY_PAY_URL:}
-  returnUrl: ${VNPAY_RETURN_URL:}
+  tmnCode: ${VNPAY_TMN_CODE:QAM9V9WJ}
+  hashSecret: ${VNPAY_HASH_SECRET:2WJP5Q16YSWL39AS8LM35TZQ696WO4C2}
+  payUrl: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  returnUrl: ${VNPAY_RETURN_URL:http://localhost:3000/}
