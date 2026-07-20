@@ -6,7 +6,8 @@ import { AuthForm } from './components/AuthForm';
 import { AdminForm } from './components/AdminForm';
 import { ProfilePage } from './components/ProfilePage';
 import { ProfileEditForm } from './components/ProfileEditForm';
-import { completePayment, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, updateEvent, updateUserProfile } from './api';
+import { ChatBox } from './components/ChatBox';
+import { completePayment, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, sendChatMessage, updateEvent, updateUserProfile } from './api';
 
 const PAGES = {
   HOME: 'home',
@@ -26,6 +27,7 @@ function App() {
   const [totalEventsCount, setTotalEventsCount] = useState(0);
   const [keyword, setKeyword] = useState('');
   const [sort, setSort] = useState('dateTime,asc');
+  const eventCountLabel = events.length > 0 ? `${events.length.toLocaleString('vi-VN')} sự kiện` : 'Không có sự kiện';
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
@@ -69,6 +71,8 @@ function App() {
   const [editMode, setEditMode] = useState(false);
   const [savedEventIds, setSavedEventIds] = useState(() => loadSavedEvents(localStorage.getItem('userEmail') || ''));
   const [bookingsView, setBookingsView] = useState('history');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
 
   const isAuthenticated = !!token;
   const isAdmin = userRole === 'ROLE_ADMIN';
@@ -305,6 +309,13 @@ function App() {
       localStorage.setItem('userRole', data.role);
     } catch (e) {
       console.error('Không thể lấy profile user', e);
+      setToken('');
+      setUserEmail('');
+      setUserRole('');
+      setProfile(null);
+      localStorage.removeItem('jwtToken');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userRole');
     }
   };
 
@@ -418,6 +429,27 @@ function App() {
     }
   };
 
+  const handleSendChat = async (text) => {
+    const userMessage = { sender: 'user', text };
+    setChatMessages((current) => [...current, userMessage]);
+
+    try {
+      const response = await sendChatMessage(text);
+      const botText = typeof response === 'string'
+        ? response
+        : response?.message || response?.text || 'Không nhận được phản hồi.';
+      setChatMessages((current) => [...current, { sender: 'bot', text: botText }]);
+    } catch (e) {
+      setChatMessages((current) => [...current, { sender: 'bot', text: 'Không thể kết nối tới chatbot: ' + e.message }]);
+    }
+  };
+
+  const handleOpenChat = () => setChatOpen(true);
+  const handleCloseChat = () => {
+    setChatOpen(false);
+    setChatMessages([]);
+  };
+
   const handlePaymentCallback = async () => {
     const params = new URLSearchParams(window.location.search);
     const bookingId = params.get('bookingId');
@@ -512,6 +544,26 @@ function App() {
         {(message || error) && (
           <div className={`alert ${message ? 'success' : 'danger'}`}>{message || error}</div>
         )}
+
+        <button
+          type="button"
+          onClick={handleOpenChat}
+          style={{
+            position: 'fixed',
+            right: '24px',
+            bottom: '24px',
+            zIndex: 9998,
+            background: '#0ea5e9',
+            border: 'none',
+            borderRadius: '999px',
+            color: '#ffffff',
+            padding: '14px 20px',
+            boxShadow: '0 14px 30px rgba(14, 165, 233, 0.24)',
+            cursor: 'pointer'
+          }}
+        >
+          {chatOpen ? 'Chat đang mở' : 'Mở chatbot hỗ trợ'}
+        </button>
 
         {activePage === PAGES.PROFILE && !profileEditMode && (
           <ProfilePage
@@ -706,8 +758,8 @@ function App() {
                       color: '#334155'
                     }}
                   >
-                    <option value="dateTime,asc">Mới nhất</option>
-                    <option value="dateTime,desc">Cũ nhất</option>
+                    <option value="dateTime,asc">Cũ nhất</option>
+                    <option value="dateTime,desc">Mới nhất</option>
                     <option value="price,asc">Giá vé thấp đến cao</option>
                     <option value="price,desc">Giá vé cao đến thấp</option>
                   </select>
@@ -724,7 +776,7 @@ function App() {
                   }}
                 >
                   <span style={{ fontWeight: '600', color: '#0f172a' }}>
-                    {totalEventsCount.toLocaleString('vi-VN')} sự kiện
+                    {eventCountLabel}
                   </span>
                 </div>
               </div>
@@ -1135,6 +1187,7 @@ function App() {
             )}
           </section>
         )}
+        <ChatBox open={chatOpen} messages={chatMessages} onClose={handleCloseChat} onSend={handleSendChat} />
       </main>
     </div>
   );

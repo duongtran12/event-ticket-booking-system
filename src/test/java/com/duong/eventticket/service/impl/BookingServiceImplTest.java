@@ -97,7 +97,7 @@ class BookingServiceImplTest {
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        BookingResponse response = bookingService.cancelBooking("user@example.com", 10L);
+        BookingResponse response = bookingService.cancelBooking("user@example.com", 10L, "User requested cancellation");
 
         assertEquals("AVAILABLE", response.getStatus());
         assertEquals(100, event.getAvailableTickets());

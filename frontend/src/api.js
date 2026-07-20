@@ -3,10 +3,12 @@ const API_BASE = 'http://localhost:8081/api';
 async function handleResponse(response) {
   const contentType = response.headers.get('content-type') || '';
   const isJson = contentType.includes('application/json');
-  const body = isJson ? await response.json() : null;
+  const body = isJson ? await response.json() : await response.text();
 
   if (!response.ok) {
-    const message = body?.message || body?.error || 'Đã có lỗi xảy ra.';
+    const message = (body && typeof body === 'object' && (body.message || body.error))
+      || (typeof body === 'string' ? body : null)
+      || 'Đã có lỗi xảy ra.';
     throw new Error(message);
   }
 
@@ -176,6 +178,18 @@ export async function getAdminStats(token) {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+  });
+
+  return handleResponse(response);
+}
+
+export async function sendChatMessage(message) {
+  const response = await fetch(`${API_BASE}/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message }),
   });
 
   return handleResponse(response);

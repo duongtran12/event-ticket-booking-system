@@ -30,3 +30,14 @@ vnpay:
   hashSecret: ${VNPAY_HASH_SECRET:2WJP5Q16YSWL39AS8LM35TZQ696WO4C2}
   payUrl: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
   returnUrl: ${VNPAY_RETURN_URL:http://localhost:3000/}
+gemini:
+  api-key: ${GEMINI_API_KEY:AIzaSyCSsMUvMbDLCwMNCeuWk-ufSsqxEy0DtwU}
+  model: ${GEMINI_MODEL:gemini-3.5-flash}
+
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-3.5-turbo}
+
+chat:
+  provider: ${CHAT_PROVIDER:gemini}
+
