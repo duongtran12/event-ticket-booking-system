@@ -183,6 +183,21 @@ export async function getAdminStats(token) {
   return handleResponse(response);
 }
 
+export async function checkInBooking(token, file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE}/bookings/check-in`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  return handleResponse(response);
+}
+
 export async function sendChatMessage(message) {
   const response = await fetch(`${API_BASE}/chat`, {
     method: 'POST',

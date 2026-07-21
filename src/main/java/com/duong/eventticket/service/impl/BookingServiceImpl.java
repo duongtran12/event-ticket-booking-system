@@ -24,7 +24,18 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.io.ByteArrayInputStream;
+import javax.imageio.ImageIO;
+
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.MultiFormatReader;
+import com.google.zxing.NotFoundException;
+import com.google.zxing.Result;
+import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 
 @Service
 @RequiredArgsConstructor
@@ -80,6 +91,12 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.RESERVED);
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        // Now that booking ID exists, generate a stable QR code value and persist
+        String qr = buildQrCodeValue(savedBooking);
+        savedBooking.setQrCodeValue(qr);
+        bookingRepository.save(savedBooking);
+
         return mapToResponse(savedBooking);
     }
 
@@ -232,8 +249,15 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Only RESERVED bookings can be completed. Current status: " + booking.getStatus());
         }
 
+        // Ensure QR code exists when payment completes
+        if (booking.getQrCodeValue() == null || booking.getQrCodeValue().isBlank()) {
+            String qr = buildQrCodeValue(booking);
+            booking.setQrCodeValue(qr);
+        }
+
         booking.setStatus(BookingStatus.SOLD);
-        return mapToResponse(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        return mapToResponse(saved);
     }
 
     @Override
@@ -249,11 +273,116 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         if ("00".equals(responseCode) && booking.getStatus() == BookingStatus.RESERVED) {
+            // Ensure QR code exists when payment confirmed by callback
+            if (booking.getQrCodeValue() == null || booking.getQrCodeValue().isBlank()) {
+                booking.setQrCodeValue(buildQrCodeValue(booking));
+            }
             booking.setStatus(BookingStatus.SOLD);
             bookingRepository.save(booking);
             return true;
         }
         return false;
+    }
+
+    @Override
+    @Transactional
+    public int backfillQrForSoldBookings() {
+        List<Booking> missing = bookingRepository.findByStatusAndQrCodeValueIsNull(BookingStatus.SOLD);
+        int count = 0;
+        for (Booking b : missing) {
+            b.setQrCodeValue(buildQrCodeValue(b));
+            bookingRepository.save(b);
+            count++;
+        }
+        return count;
+    }
+
+    @Override
+    @Transactional
+    public com.duong.eventticket.dto.response.CheckInResponse checkInBooking(String adminEmail, byte[] imageBytes) {
+        String qrText = decodeQrFromImage(imageBytes);
+        if (qrText == null || qrText.isBlank()) {
+            return com.duong.eventticket.dto.response.CheckInResponse.failure("Không đọc được mã QR từ ảnh");
+        }
+
+        Optional<Booking> bookingOpt = bookingRepository.findAll().stream()
+                .filter(booking -> qrText.equals(booking.getQrCodeValue()))
+                .findFirst();
+
+        if (bookingOpt.isEmpty()) {
+            return com.duong.eventticket.dto.response.CheckInResponse.failure("Không tìm thấy vé tương ứng với mã QR");
+        }
+
+        Booking booking = bookingOpt.get();
+        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.EXPIRED) {
+            return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé không còn hợp lệ");
+        }
+
+        if (booking.isCheckedIn()) {
+            return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé này đã được check-in trước đó");
+        }
+
+        if (booking.getStatus() != BookingStatus.SOLD) {
+            return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé chưa được thanh toán thành công");
+        }
+
+        booking.setCheckedIn(true);
+        LocalDateTime now = LocalDateTime.now();
+        booking.setCheckedInAt(now);
+        booking.setCheckedInBy(adminEmail);
+        bookingRepository.save(booking);
+
+        return com.duong.eventticket.dto.response.CheckInResponse.success(
+                "Check-in thành công",
+                booking.getId(),
+                booking.getUser().getFullName(),
+                booking.getEvent().getTitle(),
+                booking.getEvent().getLocation(),
+            booking.getQrCodeValue(),
+            now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
+        );
+    }
+
+    private String buildQrCodeValue(Booking booking) {
+        return "EVT-" + booking.getEvent().getId() + "-BOOK-" + booking.getId() + "-" + UUID.randomUUID();
+    }
+
+    private String decodeQrFromImage(byte[] imageBytes) {
+        if (imageBytes == null || imageBytes.length == 0) {
+            return null;
+        }
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes)) {
+            java.awt.image.BufferedImage bufferedImage = ImageIO.read(bais);
+            if (bufferedImage == null) return null;
+            BufferedImageLuminanceSource source = new BufferedImageLuminanceSource(bufferedImage);
+            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+            Result result = new MultiFormatReader().decode(bitmap);
+            if (result != null) {
+                String text = result.getText();
+                return text;
+            }
+        } catch (NotFoundException nf) {
+            // QR not found in image
+            return null;
+        } catch (Exception ex) {
+            return null;
+        }
+        return null;
+    }
+
+    private String generateQrBase64(String text) {
+        if (text == null) return null;
+        try {
+            int size = 300;
+            com.google.zxing.qrcode.QRCodeWriter qrWriter = new com.google.zxing.qrcode.QRCodeWriter();
+            com.google.zxing.common.BitMatrix bitMatrix = qrWriter.encode(text, com.google.zxing.BarcodeFormat.QR_CODE, size, size);
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            com.google.zxing.client.j2se.MatrixToImageWriter.writeToStream(bitMatrix, "PNG", baos);
+            String base64 = java.util.Base64.getEncoder().encodeToString(baos.toByteArray());
+            return "data:image/png;base64," + base64;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private String buildHashData(Map<String, String> params) {
@@ -307,6 +436,13 @@ public class BookingServiceImpl implements BookingService {
         response.setCreatedAt(booking.getCreatedAt());
         response.setUpdatedAt(booking.getUpdatedAt());
         response.setCancelReason(booking.getCancelReason());
+        response.setQrCodeValue(booking.getQrCodeValue());
+        if (booking.getQrCodeValue() != null && !booking.getQrCodeValue().isBlank()) {
+            String dataUri = generateQrBase64(booking.getQrCodeValue());
+            response.setQrCodeImage(dataUri);
+        } else {
+            response.setQrCodeImage(null);
+        }
         return response;
     }
 }

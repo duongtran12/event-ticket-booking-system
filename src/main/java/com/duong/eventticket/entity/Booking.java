@@ -42,6 +42,18 @@ public class Booking {
     @Column(length = 500)
     private String cancelReason;
 
+    @Column(length = 500)
+    private String qrCodeValue;
+
+    @Column(nullable = false)
+    private boolean checkedIn = false;
+
+    @Column
+    private LocalDateTime checkedInAt;
+
+    @Column(length = 255)
+    private String checkedInBy;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

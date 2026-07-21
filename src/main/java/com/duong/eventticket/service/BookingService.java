@@ -2,6 +2,7 @@ package com.duong.eventticket.service;
 
 import com.duong.eventticket.dto.request.BookingRequest;
 import com.duong.eventticket.dto.response.BookingResponse;
+import com.duong.eventticket.dto.response.CheckInResponse;
 import com.duong.eventticket.entity.BookingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,4 +28,7 @@ public interface BookingService {
     long countBookingsByStatus(BookingStatus status);
 
     java.math.BigDecimal sumBookingRevenueByStatus(BookingStatus status);
+
+    CheckInResponse checkInBooking(String adminEmail, byte[] imageBytes);
+    int backfillQrForSoldBookings();
 }

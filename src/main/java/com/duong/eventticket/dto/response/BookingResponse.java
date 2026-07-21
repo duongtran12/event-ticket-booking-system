@@ -25,6 +25,11 @@ public class BookingResponse {
     private BigDecimal totalPrice;
     private String status;
     private String cancelReason;
+    private String qrCodeValue;
+    private String qrCodeImage;
+    private Boolean checkedIn;
+    private LocalDateTime checkedInAt;
+    private String checkedInBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

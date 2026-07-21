@@ -162,6 +162,13 @@ export function BookingCard({ booking, onPay, onCancel }) {
           </div>
         )}
 
+        {booking.status === 'SOLD' && booking.qrCodeImage && (
+          <div style={{ marginTop: '12px', textAlign: 'center' }}>
+            <p style={{ margin: '0 0 8px 0', fontWeight: 700 }}>Mã QR vé</p>
+            <img src={booking.qrCodeImage} alt="QR Code" style={{ width: '200px', height: '200px', margin: '0 auto', display: 'block' }} />
+          </div>
+        )}
+
         {booking.status === 'CANCELLED' && booking.cancelReason && (
           <div style={{ marginTop: '12px', padding: '14px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
             <span style={{ display: 'block', fontSize: '14px', color: '#475569', marginBottom: '6px', fontWeight: '600' }}>Lý do hủy vé:</span>

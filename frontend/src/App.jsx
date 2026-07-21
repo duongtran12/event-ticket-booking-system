@@ -7,7 +7,7 @@ import { AdminForm } from './components/AdminForm';
 import { ProfilePage } from './components/ProfilePage';
 import { ProfileEditForm } from './components/ProfileEditForm';
 import { ChatBox } from './components/ChatBox';
-import { completePayment, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, sendChatMessage, updateEvent, updateUserProfile } from './api';
+import { checkInBooking, completePayment, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, sendChatMessage, updateEvent, updateUserProfile } from './api';
 
 const PAGES = {
   HOME: 'home',
@@ -73,6 +73,9 @@ function App() {
   const [bookingsView, setBookingsView] = useState('history');
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
+  const [checkInFile, setCheckInFile] = useState(null);
+  const [checkInResult, setCheckInResult] = useState(null);
+  const [checkInLoading, setCheckInLoading] = useState(false);
 
   const isAuthenticated = !!token;
   const isAdmin = userRole === 'ROLE_ADMIN';
@@ -517,6 +520,25 @@ function App() {
     event.preventDefault();
     setPage(0);
     await fetchEvents();
+  };
+
+  const handleCheckIn = async (event) => {
+    event.preventDefault();
+    if (!checkInFile) {
+      setCheckInResult({ success: false, message: 'Vui lòng chọn ảnh QR trước.' });
+      return;
+    }
+
+    setCheckInLoading(true);
+    setCheckInResult(null);
+    try {
+      const data = await checkInBooking(token, checkInFile);
+      setCheckInResult(data);
+    } catch (e) {
+      setCheckInResult({ success: false, message: e.message || 'Không thể xử lý check-in.' });
+    } finally {
+      setCheckInLoading(false);
+    }
   };
 
   const updateAuthValues = (field, value) => {
@@ -1154,6 +1176,41 @@ function App() {
                       </>
                     ) : (
                       <div className="message-panel">Đang tải thống kê...</div>
+                    )}
+                    <div className="section-heading" style={{ marginTop: '24px' }}>
+                      <h2>Check-in vé</h2>
+                      <p>Upload ảnh QR của vé để xác nhận khách vào cổng.</p>
+                    </div>
+                    <form onSubmit={handleCheckIn} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => setCheckInFile(event.target.files?.[0] || null)}
+                        style={{ padding: '10px', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+                      />
+                      <button type="submit" disabled={checkInLoading} style={{ width: 'fit-content', padding: '10px 16px', borderRadius: '8px', border: 'none', background: '#0f766e', color: '#fff', cursor: 'pointer' }}>
+                        {checkInLoading ? 'Đang xử lý...' : 'Quét check-in'}
+                      </button>
+                    </form>
+                    {checkInResult && (
+                      <div style={{ padding: '16px', borderRadius: '12px', boxShadow: '0 6px 18px rgba(15,23,42,0.06)', background: checkInResult.success ? '#f0fdf4' : '#fff1f2', color: checkInResult.success ? '#065f46' : '#7f1d1d', borderLeft: `6px solid ${checkInResult.success ? '#10b981' : '#ef4444'}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: 44, height: 44, borderRadius: 8, background: checkInResult.success ? '#ecfdf5' : '#fff1f2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                            {checkInResult.success ? '✔' : '✖'}
+                          </div>
+                          <div>
+                            <strong style={{ fontSize: 16 }}>{checkInResult.success ? 'Thành công' : 'Thất bại'}</strong>
+                            <div style={{ marginTop: 4 }}>{checkInResult.message}</div>
+                          </div>
+                        </div>
+
+                        <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                          {checkInResult.customerName && <div><strong>Khách:</strong> {checkInResult.customerName}</div>}
+                          {checkInResult.eventTitle && <div><strong>Sự kiện:</strong> {checkInResult.eventTitle}</div>}
+                          {checkInResult.eventLocation && <div><strong>Địa điểm:</strong> {checkInResult.eventLocation}</div>}
+                          {checkInResult.checkedInAt && <div><strong>Thời gian check-in:</strong> {checkInResult.checkedInAt}</div>}
+                        </div>
+                      </div>
                     )}
                     <div className="section-heading" style={{ marginTop: '24px' }}>
                       <h2>Quản lý sự kiện</h2>

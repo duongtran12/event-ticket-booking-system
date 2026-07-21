@@ -32,4 +32,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b.event.title FROM Booking b WHERE b.status = :status GROUP BY b.event.id, b.event.title ORDER BY SUM(b.quantity) DESC")
     List<String> findTopEventTitleByStatus(@Param("status") BookingStatus status, Pageable pageable);
+
+    List<Booking> findByStatusAndQrCodeValueIsNull(BookingStatus status);
 }

@@ -3,6 +3,7 @@ package com.duong.eventticket.controller;
 import com.duong.eventticket.dto.request.BookingRequest;
 import com.duong.eventticket.dto.request.CancelBookingRequest;
 import com.duong.eventticket.dto.response.BookingResponse;
+import com.duong.eventticket.dto.response.CheckInResponse;
 import com.duong.eventticket.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -108,5 +111,23 @@ public class BookingController {
     public ResponseEntity<String> handlePaymentCallback(@RequestParam Map<String, String> params) {
         boolean success = bookingService.handlePaymentCallback(params);
         return success ? ResponseEntity.ok("success") : ResponseEntity.badRequest().body("failed");
+    }
+
+    @PostMapping("/check-in")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Check in a booking from a QR image uploaded by admin")
+    public ResponseEntity<CheckInResponse> checkInBooking(
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication
+    ) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(CheckInResponse.failure("Vui lòng chọn ảnh chứa mã QR"));
+        }
+        try {
+            CheckInResponse response = bookingService.checkInBooking(authentication.getName(), file.getBytes());
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(CheckInResponse.failure("Không thể xử lý ảnh QR: " + ex.getMessage()));
+        }
     }
 }
