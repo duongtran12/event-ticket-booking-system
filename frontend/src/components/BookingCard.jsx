@@ -63,12 +63,12 @@ export function BookingCard({ booking, onPay, onCancel }) {
           {/* FIELD GRID */}
           <div className="ticket-pass-grid">
             <div className="ticket-pass-field">
-              <span>📍 Địa điểm</span>
+              <span> Địa điểm</span>
               <p>{booking.eventLocation || '---'}</p>
             </div>
 
             <div className="ticket-pass-field">
-              <span>📅 Thời gian diễn ra</span>
+              <span> Thời gian diễn ra</span>
               <p>
                 {booking.eventDateTime
                   ? new Date(booking.eventDateTime).toLocaleString('vi-VN', {
@@ -83,12 +83,12 @@ export function BookingCard({ booking, onPay, onCancel }) {
             </div>
 
             <div className="ticket-pass-field">
-              <span>🎟️ Số lượng</span>
+              <span> Số lượng</span>
               <p>{booking.quantity} Vé</p>
             </div>
 
             <div className="ticket-pass-field">
-              <span>💵 Giá vé</span>
+              <span> Giá vé</span>
               <p style={{ color: '#2563eb' }}>
                 {Number(booking.eventPrice || 0).toLocaleString('vi-VN')}₫
               </p>

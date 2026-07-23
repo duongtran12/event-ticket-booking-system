@@ -19,10 +19,10 @@ const PAGES = {
 };
 
 function App() {
-  const [activePage, setActivePage] = useState(PAGES.HOME);
+  const [activePage, setActivePage] = useState(() => localStorage.getItem('activePage') || PAGES.HOME);
   const [events, setEvents] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(() => Number(localStorage.getItem('eventPage') || 0));
   const [totalPages, setTotalPages] = useState(0);
   const [totalEventsCount, setTotalEventsCount] = useState(0);
   const [keyword, setKeyword] = useState('');
@@ -70,7 +70,7 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [savedEventIds, setSavedEventIds] = useState(() => loadSavedEvents(localStorage.getItem('userEmail') || ''));
-  const [bookingsView, setBookingsView] = useState('history');
+  const [bookingsView, setBookingsView] = useState(() => localStorage.getItem('bookingsView') || 'history');
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [checkInFile, setCheckInFile] = useState(null);
@@ -103,6 +103,18 @@ function App() {
       fetchAdminStats();
     }
   }, [activePage, isAuthenticated, isAdmin]);
+
+  useEffect(() => {
+    localStorage.setItem('activePage', activePage);
+  }, [activePage]);
+
+  useEffect(() => {
+    localStorage.setItem('bookingsView', bookingsView);
+  }, [bookingsView]);
+
+  useEffect(() => {
+    localStorage.setItem('eventPage', String(page));
+  }, [page]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -367,9 +379,9 @@ function App() {
             : event
         )
       );
-      if (activePage === PAGES.BOOKINGS) {
-        fetchBookings();
-      }
+      setBookingsView('reserved');
+      setActivePage(PAGES.BOOKINGS);
+      fetchBookings();
     } catch (e) {
       setError(e.message);
     }
