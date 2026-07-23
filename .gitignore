@@ -43,3 +43,9 @@ target/
 # Chặn file cấu hình IDE cá nhân (nếu chưa có)
 .idea/
 *.class
+
+# Chặn cấu hình local và biến môi trường
+application-secrets.yml
+application-local.yml
+.env
+frontend/.env
