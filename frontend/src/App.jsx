@@ -986,62 +986,103 @@ function App() {
         )}
 
         {activePage === PAGES.BOOKINGS && (
-          <section>
-            <div className="section-heading">
-              <h2>Vé của tôi</h2>
-              <p>Xem danh sách vé hoặc chuyển sang vé lưu trữ.</p>
+          <section style={{ maxWidth: '1000px', margin: '0 auto', padding: '10px 0' }}>
+            <div className="section-heading" style={{ marginBottom: '24px' }}>
+              <h2> Vé của tôi</h2>
+              <p>Quản lý các vé sự kiện bạn đã đặt, thanh toán và sự kiện đã lưu.</p>
             </div>
+
             {!isAuthenticated ? (
-              <div className="message-panel">Vui lòng đăng nhập để xem vé của bạn.</div>
+              <div className="message-panel">Vui lòng đăng nhập để xem danh sách vé của bạn.</div>
             ) : (
               <>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+                {/* TICKETS STATS SUMMARY BAR */}
+                <div className="tickets-stats-bar">
+                  <div className="tickets-stat-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', width: '100%' }}>
+                    <div className="tickets-stat-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <span>TỔNG VÉ</span>
+                      <strong>{bookings.length}</strong>
+                    </div>
+                  </div>
+
+                  <div className="tickets-stat-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', width: '100%' }}>
+                    <div className="tickets-stat-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <span>ĐÃ THANH TOÁN</span>
+                      <strong>{bookings.filter((b) => b.status === 'SOLD').length}</strong>
+                    </div>
+                  </div>
+
+                  <div className="tickets-stat-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', width: '100%' }}>
+                    <div className="tickets-stat-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <span>CHỜ THANH TOÁN</span>
+                      <strong>{bookings.filter((b) => b.status === 'RESERVED').length}</strong>
+                    </div>
+                  </div>
+
+                  <div className="tickets-stat-item" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', width: '100%' }}>
+                    <div className="tickets-stat-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <span>SỰ KIỆN ĐÃ LƯU</span>
+                      <strong>{savedEventIds.length}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SEGMENTED FILTER TABS */}
+                <div className="ticket-filter-tabs">
                   <button
                     type="button"
-                    onClick={() => setBookingsView('history')}
-                    style={{
-                      padding: '12px 18px',
-                      borderRadius: '9999px',
-                      border: bookingsView === 'history' ? '1px solid #2563eb' : '1px solid #cbd5e1',
-                      background: bookingsView === 'history' ? '#eff6ff' : '#ffffff',
-                      color: bookingsView === 'history' ? '#1d4ed8' : '#475569',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
+                    className={`ticket-filter-btn ${bookingsView === 'history' || bookingsView === 'all' ? 'active' : ''}`}
+                    onClick={() => setBookingsView('all')}
                   >
-                    Lịch sử vé
+                    <span>Tất cả vé</span>
+                    <span className="ticket-filter-count">{bookings.length}</span>
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => setBookingsView('saved')}
-                    style={{
-                      padding: '12px 18px',
-                      borderRadius: '9999px',
-                      border: bookingsView === 'saved' ? '1px solid #2563eb' : '1px solid #cbd5e1',
-                      background: bookingsView === 'saved' ? '#eff6ff' : '#ffffff',
-                      color: bookingsView === 'saved' ? '#1d4ed8' : '#475569',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
+                    className={`ticket-filter-btn ${bookingsView === 'reserved' ? 'active' : ''}`}
+                    onClick={() => setBookingsView('reserved')}
                   >
-                    Vé lưu trữ
+                    <span>Chờ thanh toán</span>
+                    <span className="ticket-filter-count">{bookings.filter((b) => b.status === 'RESERVED').length}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ticket-filter-btn ${bookingsView === 'sold' ? 'active' : ''}`}
+                    onClick={() => setBookingsView('sold')}
+                  >
+                    <span>Đã thanh toán</span>
+                    <span className="ticket-filter-count">{bookings.filter((b) => b.status === 'SOLD').length}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ticket-filter-btn ${bookingsView === 'cancelled' ? 'active' : ''}`}
+                    onClick={() => setBookingsView('cancelled')}
+                  >
+                    <span>Đã hủy</span>
+                    <span className="ticket-filter-count">{bookings.filter((b) => b.status === 'CANCELLED').length}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ticket-filter-btn ${bookingsView === 'saved' ? 'active' : ''}`}
+                    onClick={() => setBookingsView('saved')}
+                  >
+                    <span>⭐ Sự kiện đã lưu</span>
+                    <span className="ticket-filter-count">{savedEventIds.length}</span>
                   </button>
                 </div>
 
-                {bookingsView === 'history' ? (
-                  bookings.length === 0 ? (
-                    <div className="message-panel">Bạn chưa có đơn đặt vé nào.</div>
-                  ) : (
-                    <div className="booking-list">
-                      {bookings.map((booking) => (
-                        <BookingCard key={booking.id} booking={booking} onPay={handlePayBooking} onCancel={handleCancelBooking} />
-                      ))}
-                    </div>
-                  )
-                ) : (
+                {/* CONTENT AREA BASED ON TAB */}
+                {bookingsView === 'saved' ? (
                   <>
                     {events.filter((event) => savedEventIds.includes(event.id)).length === 0 ? (
-                      <div className="message-panel">Bạn chưa lưu trữ sự kiện nào.</div>
+                      <div className="message-panel">
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>⭐</div>
+                        Bạn chưa lưu trữ sự kiện nào.
+                      </div>
                     ) : (
                       <div
                         className="event-grid"
@@ -1054,19 +1095,60 @@ function App() {
                           width: '100%'
                         }}
                       >
-                        {events.filter((event) => savedEventIds.includes(event.id)).map((event) => (
-                          <EventCard
-                            key={event.id}
-                            event={event}
-                            quantity={bookingQuantities[event.id] || 1}
-                            onQuantityChange={handleQuantityChange}
-                            onBook={handleBookTicket}
-                            isSaved={savedEventIds.includes(event.id)}
-                            onToggleSave={handleToggleSaveEvent}
-                          />
-                        ))}
+                        {events
+                          .filter((event) => savedEventIds.includes(event.id))
+                          .map((event) => (
+                            <EventCard
+                              key={event.id}
+                              event={event}
+                              quantity={bookingQuantities[event.id] || 1}
+                              onQuantityChange={handleQuantityChange}
+                              onBook={handleBookTicket}
+                              isSaved={savedEventIds.includes(event.id)}
+                              onToggleSave={handleToggleSaveEvent}
+                            />
+                          ))}
                       </div>
                     )}
+                  </>
+                ) : (
+                  <>
+                    {(() => {
+                      const filteredBookings = bookings.filter((b) => {
+                        if (bookingsView === 'reserved') return b.status === 'RESERVED';
+                        if (bookingsView === 'sold') return b.status === 'SOLD';
+                        if (bookingsView === 'cancelled') return b.status === 'CANCELLED';
+                        return true; // 'all' or 'history'
+                      });
+
+                      if (filteredBookings.length === 0) {
+                        return (
+                          <div className="message-panel">
+                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎫</div>
+                            {bookingsView === 'reserved'
+                              ? 'Không có vé nào đang chờ thanh toán.'
+                              : bookingsView === 'sold'
+                              ? 'Bạn chưa có vé nào đã thanh toán.'
+                              : bookingsView === 'cancelled'
+                              ? 'Không có vé nào bị hủy.'
+                              : 'Bạn chưa có đơn đặt vé nào.'}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="booking-list">
+                          {filteredBookings.map((booking) => (
+                            <BookingCard
+                              key={booking.id}
+                              booking={booking}
+                              onPay={handlePayBooking}
+                              onCancel={handleCancelBooking}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </>
                 )}
               </>

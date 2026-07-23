@@ -1,4 +1,7 @@
+import { useState } from 'react';
+
 export function BookingCard({ booking, onPay, onCancel }) {
+  const [showQrModal, setShowQrModal] = useState(false);
   const totalPrice = booking.totalPrice ? Number(booking.totalPrice) : 0;
   const statusClass = (booking.status || '').toLowerCase();
 
@@ -13,228 +16,274 @@ export function BookingCard({ booking, onPay, onCancel }) {
   };
 
   const statusColors = {
-    RESERVED: { text: '#b45309', bg: '#fef3c7', border: '#fde68a' },
-    SOLD: { text: '#15803d', bg: '#dcfce7', border: '#bbf7d0' },
-    CONFIRMED: { text: '#15803d', bg: '#dcfce7', border: '#bbf7d0' },
-    AVAILABLE: { text: '#1d4ed8', bg: '#dbeafe', border: '#bfdbfe' },
-    PENDING: { text: '#1d4ed8', bg: '#dbeafe', border: '#bfdbfe' },
-    EXPIRED: { text: '#b91c1c', bg: '#fee2e2', border: '#fecaca' },
-    CANCELLED: { text: '#4b5563', bg: '#f3f4f6', border: '#e5e7eb' }
+    RESERVED: { text: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: '⏳' },
+    SOLD: { text: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: '🎟️' },
+    CONFIRMED: { text: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: '✅' },
+    AVAILABLE: { text: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: '⚡' },
+    PENDING: { text: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: '⏳' },
+    EXPIRED: { text: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: '⚠️' },
+    CANCELLED: { text: '#64748b', bg: '#f8fafc', border: '#e2e8f0', icon: '❌' }
   };
 
   const statusLabel = statusLabelMap[booking.status] || booking.status;
-  const currentStatusColors = statusColors[booking.status] || { text: '#374151', bg: '#f3f4f6', border: '#e5e7eb' };
+  const currentStatusColors = statusColors[booking.status] || { text: '#475569', bg: '#f8fafc', border: '#e2e8f0', icon: '🎫' };
 
   return (
-    <article
-      className={`booking-card booking-card-${statusClass}`}
-      style={{
-        background: '#ffffff',
-        borderRadius: '16px',
-        padding: '24px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-        border: '1px solid #f3f4f6',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        width: '100%',
-        maxWidth: '700px',
-        margin: '24px auto 24px auto',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        boxSizing: 'border-box'
-      }}
-    >
-      <div
-        className="booking-header"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '16px'
-        }}
-      >
-        <h3
-          style={{
-            margin: 0,
-            fontSize: '20px',
-            fontWeight: '700',
-            color: '#111827',
-            lineHeight: '1.4',
-            flex: 1
-          }}
-        >
-          {booking.eventTitle}
-        </h3>
-        <span
-          className={`status-pill status-${statusClass}`}
-          style={{
-            fontSize: '13px',
-            fontWeight: '600',
-            padding: '6px 14px',
-            borderRadius: '9999px',
-            whiteSpace: 'nowrap',
-            color: currentStatusColors.text,
-            backgroundColor: currentStatusColors.bg,
-            border: `1px solid ${currentStatusColors.border}`
-          }}
-        >
-          {statusLabel}
-        </span>
-      </div>
-
-      <hr style={{ border: 0, borderTop: '1px dashed #e5e7eb', margin: 0 }} />
-
-      <div
-        className="booking-details"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}
-      >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+    <article className="ticket-pass">
+      {/* MAIN TICKET CONTENT */}
+      <div className="ticket-pass-main">
+        <div className="ticket-pass-header">
           <div>
-            <span style={{ fontSize: '13px', color: '#6b7280' }}>Địa điểm</span>
-            <p style={{ margin: '6px 0 0', fontSize: '15px', fontWeight: '600', color: '#1f2937' }}>{booking.eventLocation || '---'}</p>
+            <div className="ticket-pass-id">MÃ VÉ #{booking.id}</div>
+            <h3 className="ticket-pass-title">{booking.eventTitle}</h3>
           </div>
-          <div>
-            <span style={{ fontSize: '13px', color: '#6b7280' }}>Thời gian</span>
-            <p style={{ margin: '6px 0 0', fontSize: '15px', fontWeight: '600', color: '#1f2937' }}>
-              {booking.eventDateTime ? new Date(booking.eventDateTime).toLocaleString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-              }) : '---'}
+
+          <span
+            className={`status-pill status-${statusClass}`}
+            style={{
+              fontSize: '12px',
+              fontWeight: '700',
+              padding: '6px 14px',
+              borderRadius: '999px',
+              whiteSpace: 'nowrap',
+              color: currentStatusColors.text,
+              backgroundColor: currentStatusColors.bg,
+              border: `1px solid ${currentStatusColors.border}`,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>{currentStatusColors.icon}</span>
+            <span>{statusLabel}</span>
+          </span>
+        </div>
+
+        {/* FIELD GRID */}
+        <div className="ticket-pass-grid">
+          <div className="ticket-pass-field">
+            <span> Địa điểm</span>
+            <p>{booking.eventLocation || '---'}</p>
+          </div>
+
+          <div className="ticket-pass-field">
+            <span> Thời gian diễn ra</span>
+            <p>
+              {booking.eventDateTime
+                ? new Date(booking.eventDateTime).toLocaleString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  })
+                : '---'}
             </p>
           </div>
-          <div>
-            <span style={{ fontSize: '13px', color: '#6b7280' }}>Giá vé</span>
-            <p style={{ margin: '6px 0 0', fontSize: '15px', fontWeight: '700', color: '#ef4444' }}>
+
+          <div className="ticket-pass-field">
+            <span> Số lượng</span>
+            <p>{booking.quantity} Vé</p>
+          </div>
+
+          <div className="ticket-pass-field">
+            <span> Giá vé</span>
+            <p style={{ color: '#2563eb' }}>
               {Number(booking.eventPrice || 0).toLocaleString('vi-VN')}₫
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '15px', color: '#6b7280' }}>Số lượng vé:</span>
-          <span style={{ fontSize: '15px', fontWeight: '600', color: '#1f2937' }}>{booking.quantity} vé</span>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '15px', color: '#6b7280' }}>Đặt lúc:</span>
-          <span style={{ fontSize: '14px', color: '#4b5563' }}>
-            {new Date(booking.createdAt).toLocaleString('vi-VN', {
-              hour: '2-digit',
-              minute: '2-digit',
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric'
-            })}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-          <span style={{ fontSize: '15px', color: '#6b7280' }}>Tổng giá tiền:</span>
-          <span style={{ fontSize: '20px', fontWeight: '800', color: '#ef4444' }}>
-            {totalPrice.toLocaleString('vi-VN')}₫
-          </span>
-        </div>
-
+        {/* BUYER INFORMATION IF SOLD */}
         {booking.status === 'SOLD' && (
-          <div style={{ marginTop: '12px', padding: '16px', borderRadius: '18px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-            <p style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '700', color: '#0f172a' }}>Thông tin người mua</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-              <div>
-                <span style={{ fontSize: '13px', color: '#64748b' }}>Họ tên</span>
-                <p style={{ margin: '6px 0 0', fontSize: '15px', color: '#1f2937' }}>{booking.buyerName || booking.userEmail}</p>
-              </div>
-              <div>
-                <span style={{ fontSize: '13px', color: '#64748b' }}>SĐT</span>
-                <p style={{ margin: '6px 0 0', fontSize: '15px', color: '#1f2937' }}>{booking.buyerPhone || '---'}</p>
-              </div>
-              <div>
-                <span style={{ fontSize: '13px', color: '#64748b' }}>CCCD</span>
-                <p style={{ margin: '6px 0 0', fontSize: '15px', color: '#1f2937' }}>{booking.buyerCccd || '---'}</p>
-              </div>
+          <div
+            style={{
+              padding: '12px 16px',
+              borderRadius: '14px',
+              background: '#f1f5f9',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '16px',
+              fontSize: '0.85rem'
+            }}
+          >
+            <div>
+              <strong style={{ color: '#64748b', fontSize: '0.78rem', display: 'block' }}>NGƯỜI SỞ HỮU</strong>
+              <span style={{ fontWeight: '700', color: '#0f172a' }}>{booking.buyerName || booking.userEmail}</span>
             </div>
+            {booking.buyerPhone && (
+              <div>
+                <strong style={{ color: '#64748b', fontSize: '0.78rem', display: 'block' }}>SĐT</strong>
+                <span style={{ fontWeight: '600', color: '#334155' }}>{booking.buyerPhone}</span>
+              </div>
+            )}
+            {booking.buyerCccd && (
+              <div>
+                <strong style={{ color: '#64748b', fontSize: '0.78rem', display: 'block' }}>CCCD</strong>
+                <span style={{ fontWeight: '600', color: '#334155' }}>{booking.buyerCccd}</span>
+              </div>
+            )}
           </div>
         )}
 
-        {booking.status === 'SOLD' && booking.qrCodeImage && (
-          <div style={{ marginTop: '12px', textAlign: 'center' }}>
-            <p style={{ margin: '0 0 8px 0', fontWeight: 700 }}>Mã QR vé</p>
-            <img src={booking.qrCodeImage} alt="QR Code" style={{ width: '200px', height: '200px', margin: '0 auto', display: 'block' }} />
-          </div>
-        )}
-
+        {/* CANCEL REASON IF CANCELLED */}
         {booking.status === 'CANCELLED' && booking.cancelReason && (
-          <div style={{ marginTop: '12px', padding: '14px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-            <span style={{ display: 'block', fontSize: '14px', color: '#475569', marginBottom: '6px', fontWeight: '600' }}>Lý do hủy vé:</span>
-            <p style={{ margin: 0, fontSize: '15px', color: '#334155', lineHeight: '1.6' }}>{booking.cancelReason}</p>
+          <div
+            style={{
+              padding: '12px 16px',
+              borderRadius: '14px',
+              background: '#fef2f2',
+              border: '1px solid #fee2e2',
+              color: '#991b1b',
+              fontSize: '0.85rem'
+            }}
+          >
+            <strong>Lý do hủy:</strong> {booking.cancelReason}
           </div>
         )}
       </div>
 
-      {booking.status === 'RESERVED' && (
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="primary"
-            onClick={() => onPay(booking.id)}
+      {/* TICKET STUB RIGHT (QR & ACTIONS) */}
+      <div className="ticket-pass-stub">
+        <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          TỔNG CỘNG
+        </div>
+        <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#ef4444', lineHeight: 1 }}>
+          {totalPrice.toLocaleString('vi-VN')}₫
+        </div>
+
+        {/* QR CODE DISPLAY IF SOLD */}
+        {booking.status === 'SOLD' && booking.qrCodeImage && (
+          <>
+            <div className="ticket-qr-container" style={{ cursor: 'pointer' }} onClick={() => setShowQrModal(true)}>
+              <img src={booking.qrCodeImage} alt="QR Code" className="ticket-qr-img" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowQrModal(true)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#2563eb',
+                fontSize: '0.82rem',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              🔍 Phóng to mã QR
+            </button>
+          </>
+        )}
+
+        {/* PAYMENT / CANCEL BUTTONS IF RESERVED */}
+        {booking.status === 'RESERVED' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+            <button
+              type="button"
+              onClick={() => onPay(booking.id)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #006af5, #0056c6)',
+                color: '#ffffff',
+                fontSize: '0.88rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0, 106, 245, 0.25)',
+                transition: 'transform 0.15s ease'
+              }}
+            >
+              💳 Thanh toán VNPay
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onCancel?.(booking.id)}
+              style={{
+                width: '100%',
+                padding: '9px',
+                borderRadius: '10px',
+                border: '1px solid #fee2e2',
+                background: '#fff1f2',
+                color: '#ef4444',
+                fontSize: '0.82rem',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              ❌ Hủy giữ chỗ
+            </button>
+          </div>
+        )}
+
+        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 'auto' }}>
+          Đặt lúc: {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
+        </div>
+      </div>
+
+      {/* QR MODAL PREVIEW */}
+      {showQrModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowQrModal(false)}
+        >
+          <div
             style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              padding: '32px',
+              maxWidth: '380px',
               width: '100%',
-              backgroundColor: '#006af5',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px 16px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              outline: 'none',
-              boxShadow: '0 4px 12px rgba(0, 106, 245, 0.2)'
+              textAlign: 'center',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+              position: 'relative'
             }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#0056c6';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 106, 245, 0.3)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#006af5';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 106, 245, 0.2)';
-            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            Thanh toán qua VNPay
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => onCancel?.(booking.id)}
-            style={{
-              width: '100%',
-              backgroundColor: '#ef4444',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '14px 16px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              outline: 'none',
-              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#dc2626';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#ef4444';
-            }}
-          >
-            Hủy vé
-          </button>
+            <h3 style={{ margin: '0 0 6px', fontSize: '1.2rem', color: '#0f172a' }}>Mã QR Vé Vào Cổng</h3>
+            <p style={{ margin: '0 0 20px', fontSize: '0.88rem', color: '#64748b' }}>
+              Trình mã này tại quầy check-in để xác nhận vé
+            </p>
+
+            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '20px', border: '1px solid #e2e8f0', display: 'inline-block' }}>
+              <img src={booking.qrCodeImage} alt="QR Code Large" style={{ width: '240px', height: '240px', display: 'block' }} />
+            </div>
+
+            <div style={{ marginTop: '16px', fontSize: '0.85rem', fontWeight: '700', color: '#334155' }}>
+              Mã vé: #{booking.id} • {booking.eventTitle}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowQrModal(false)}
+              style={{
+                marginTop: '20px',
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                border: 'none',
+                background: '#0f172a',
+                color: '#ffffff',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              Đóng lại
+            </button>
+          </div>
         </div>
       )}
     </article>
