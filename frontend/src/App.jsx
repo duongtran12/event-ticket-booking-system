@@ -633,200 +633,179 @@ function App() {
         {activePage === PAGES.HOME && (
           <section
             style={{
-              maxWidth: '1200px',
+              maxWidth: '1360px',
               margin: '0 auto',
-              padding: '40px 20px',
-              fontFamily: 'system-ui, -apple-system, sans-serif'
+              padding: '24px 20px 40px',
+              fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
             }}
           >
-            {/* Section 1: Hero Banner */}
+            {/* HERO BANNER SECTION */}
             <div
-              className="toolbar home-toolbar"
               style={{
-                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                borderRadius: '24px',
-                padding: '60px 40px',
-                textAlign: 'center',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)',
+                borderRadius: '28px',
+                padding: '56px 40px 48px',
                 color: '#ffffff',
                 marginBottom: '32px',
-                boxShadow: '0 10px 30px rgba(15, 23, 42, 0.15)',
+                boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
                 position: 'relative',
                 overflow: 'hidden'
               }}
             >
-              <div className="home-intro" style={{ position: 'relative', zIndex: 2 }}>
-                <p
-                  className="eyebrow"
+              <div style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
+                <span
                   style={{
-                    textTransform: 'uppercase',
-                    letterSpacing: '1.5px',
-                    fontSize: '14px',
+                    display: 'inline-block',
+                    padding: '6px 16px',
+                    borderRadius: '999px',
+                    background: 'rgba(37, 99, 235, 0.2)',
+                    border: '1px solid rgba(96, 165, 250, 0.3)',
+                    color: '#60a5fa',
+                    fontSize: '12.5px',
                     fontWeight: '700',
-                    color: '#38bdf8',
-                    marginBottom: '12px',
-                    marginTop: 0
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    marginBottom: '16px'
                   }}
                 >
-                  Khám phá ngay
-                </p>
-                <h2
+                  Nền Tảng Đặt Vé Trực Tuyến
+                </span>
+
+                <h1
                   style={{
-                    fontSize: '36px',
+                    fontSize: 'clamp(2rem, 4vw, 2.75rem)',
                     fontWeight: '800',
                     margin: '0 0 16px 0',
                     lineHeight: '1.2',
-                    letterSpacing: '-0.5px'
+                    letterSpacing: '-0.03em',
+                    color: '#ffffff'
                   }}
                 >
-                  Đặt vé sự kiện HOT nhất
-                </h2>
+                  Khám phá & Đặt vé sự kiện nổi bật
+                </h1>
+
                 <p
-                  className="hero-description"
                   style={{
                     fontSize: '16px',
                     color: '#94a3b8',
-                    maxWidth: '600px',
-                    margin: '0 auto',
-                    lineHeight: '1.6'
+                    maxWidth: '620px',
+                    margin: '0 auto 32px',
+                    lineHeight: '1.6',
+                    fontWeight: '400'
                   }}
                 >
-                  Tìm nhanh sự kiện bạn yêu thích, so sánh vé và hoàn tất đặt vé chỉ trong vài bước.
+                  Tìm kiếm dễ dàng các đại nhạc hội, đêm nhạc, hội thảo công nghệ và sự kiện thể thao với hệ thống thanh toán tức thì.
                 </p>
-              </div>
 
-              {/* Background Decorative Blur Circles */}
-              <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '200px', height: '200px', background: 'rgba(56, 189, 248, 0.15)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
-              <div style={{ position: 'absolute', bottom: '-50px', right: '-50px', width: '200px', height: '200px', background: 'rgba(99, 102, 241, 0.15)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
-            </div>
-
-            {/* Section 2: Search & Filter Toolbar */}
-            <div
-              className="toolbar"
-              style={{
-                background: '#ffffff',
-                borderRadius: '16px',
-                padding: '24px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
-                border: '1px solid #f1f5f9',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '20px',
-                marginBottom: '40px'
-              }}
-            >
-              {/* Search Bar */}
-              <form
-                className="search-form"
-                onSubmit={handleSearch}
-                style={{
-                  display: 'flex',
-                  gap: '12px',
-                  width: '100%'
-                }}
-              >
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <input
-                    placeholder="Bạn tìm gì hôm nay? (Tên sự kiện, địa điểm...)"
-                    value={keyword}
-                    onChange={(event) => setKeyword(event.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '14px 16px 14px 44px',
-                      fontSize: '15px',
-                      borderRadius: '12px',
-                      border: '1px solid #cbd5e1',
-                      outline: 'none',
-                      transition: 'all 0.2s ease',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#006af5';
-                      e.target.style.boxShadow = '0 0 0 4px rgba(0, 106, 245, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#cbd5e1';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  {/* Search Icon */}
-                  <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                    🔍
-                  </span>
-                </div>
-                <button
-                  type="submit"
-                  style={{
-                    padding: '14px 28px',
-                    background: '#006af5',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '15px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'background 0.2s ease',
-                    whiteSpace: 'nowrap'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.background = '#0056c6'}
-                  onMouseOut={(e) => e.currentTarget.style.background = '#006af5'}
-                >
-                  Tìm kiếm
-                </button>
-              </form>
-
-              <div
-                className="sort-panel"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                  paddingTop: '16px',
-                  borderTop: '1px solid #f1f5f9'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span className="sort-label" style={{ fontSize: '14px', fontWeight: '600', color: '#64748b' }}>
-                    Sắp xếp theo
-                  </span>
-                  <select
-                    id="sort"
-                    value={sort}
-                    onChange={(event) => setSort(event.target.value)}
-                    style={{
-                      padding: '8px 16px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      outline: 'none',
-                      background: '#f8fafc',
-                      cursor: 'pointer',
-                      color: '#334155'
-                    }}
-                  >
-                    <option value="dateTime,asc">Cũ nhất</option>
-                    <option value="dateTime,desc">Mới nhất</option>
-                    <option value="price,asc">Giá vé thấp đến cao</option>
-                    <option value="price,desc">Giá vé cao đến thấp</option>
-                  </select>
-                </div>
-
-                <div
-                  className="page-summary"
+                {/* INTEGRATED HERO SEARCH FORM */}
+                <form
+                  onSubmit={handleSearch}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '16px',
-                    fontSize: '14px',
-                    color: '#64748b'
+                    gap: '12px',
+                    background: '#ffffff',
+                    padding: '8px 8px 8px 20px',
+                    borderRadius: '999px',
+                    boxShadow: '0 12px 36px rgba(0, 0, 0, 0.25)',
+                    maxWidth: '640px',
+                    margin: '0 auto'
                   }}
                 >
-                  <span style={{ fontWeight: '600', color: '#0f172a' }}>
-                    {eventCountLabel}
-                  </span>
-                </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="search"
+                    placeholder="Nhập tên sự kiện, ca sĩ, ca khúc hoặc địa điểm..."
+                    value={keyword}
+                    onChange={(event) => setKeyword(event.target.value)}
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '15px',
+                      color: '#0f172a',
+                      background: 'transparent'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    style={{
+                      padding: '12px 28px',
+                      background: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '999px',
+                      fontSize: '14.5px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease',
+                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#1d4ed8'}
+                    onMouseOut={(e) => e.currentTarget.style.background = '#2563eb'}
+                  >
+                    Tìm kiếm
+                  </button>
+                </form>
+              </div>
+
+              {/* BACKGROUND DECORATIVE ACCENTS */}
+              <div style={{ position: 'absolute', top: '-80px', left: '-80px', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(37, 99, 235, 0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', bottom: '-80px', right: '-80px', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            </div>
+
+            {/* BAR FILTER CATEGORY & SORT */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '16px',
+                marginBottom: '28px',
+                paddingBottom: '16px',
+                borderBottom: '1px solid #e2e8f0'
+              }}
+            >
+              {/* SORT DROPDOWN */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '13.5px', fontWeight: '600', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <line x1="4" y1="12" x2="14" y2="12" />
+                    <line x1="4" y1="18" x2="8" y2="18" />
+                  </svg>
+                  <span>Sắp xếp:</span>
+                </span>
+                <select
+                  id="sort"
+                  value={sort}
+                  onChange={(event) => setSort(event.target.value)}
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '13.5px',
+                    fontWeight: '600',
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    outline: 'none',
+                    background: '#ffffff',
+                    cursor: 'pointer',
+                    color: '#0f172a'
+                  }}
+                >
+                  <option value="dateTime,asc">Thời gian: Gần nhất</option>
+                  <option value="dateTime,desc">Thời gian: Mới cập nhật</option>
+                  <option value="price,asc">Giá vé: Thấp đến Cao</option>
+                  <option value="price,desc">Giá vé: Cao đến Thấp</option>
+                </select>
+              </div>
+
+              {/* EVENT COUNT */}
+              <div style={{ fontSize: '13.5px', color: '#64748b', fontWeight: '500' }}>
+                Hiển thị <strong style={{ color: '#0f172a', fontWeight: '700' }}>{eventCountLabel}</strong>
               </div>
             </div>
 
@@ -837,14 +816,18 @@ function App() {
                   textAlign: 'center',
                   padding: '80px 20px',
                   background: '#ffffff',
-                  borderRadius: '16px',
+                  borderRadius: '20px',
                   color: '#64748b',
-                  fontSize: '16px',
+                  fontSize: '15px',
                   fontWeight: '500',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
+                  border: '1px solid #e2e8f0'
                 }}
               >
-                <div className="spinner" style={{ marginBottom: '12px', fontSize: '24px' }}>⏳</div>
+                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                </div>
                 Đang tải danh sách sự kiện...
               </div>
             ) : events.length === 0 ? (
@@ -854,14 +837,19 @@ function App() {
                   textAlign: 'center',
                   padding: '80px 20px',
                   background: '#ffffff',
-                  borderRadius: '16px',
+                  borderRadius: '20px',
                   color: '#64748b',
-                  fontSize: '16px',
+                  fontSize: '15px',
                   fontWeight: '500',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
+                  border: '1px solid #e2e8f0'
                 }}
               >
-                <div style={{ marginBottom: '12px', fontSize: '32px' }}>🔍</div>
+                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </div>
                 Không tìm thấy sự kiện phù hợp. Hãy thử từ khóa khác!
               </div>
             ) : (

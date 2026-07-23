@@ -19,7 +19,12 @@ body,
 }
 
 body {
-  background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+  background: #f8fafc;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 button,
