@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/event_ticket_db}
-    username: ${SPRING_DATASOURCE_USERNAME:}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
 
   jpa:
     hibernate:
@@ -19,10 +19,10 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
   mail:
-    host: ${MAIL_HOST:}
-    port: ${MAIL_PORT:}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:2525}
+    username: ${MAIL_USERNAME:58a6be498100b9}
+    password: ${MAIL_PASSWORD:6e3c6c58045d57}
     properties:
       mail:
         smtp:
@@ -38,16 +38,16 @@ app:
     from: ${MAIL_FROM:no-reply@eventticket.local}
 
 jwt:
-  secret: ${JWT_SECRET:}
+  secret: ${JWT_SECRET:mySecretKeyMySecretKeyMySecretKey123456NeedToBeAtLeast32BytesLong}
   expiration: 86400000
 
 vnpay:
   tmnCode: ${VNPAY_TMN_CODE:QAM9V9WJ}
-  hashSecret: ${VNPAY_HASH_SECRET:}
-  payUrl: ${VNPAY_PAY_URL:}
-  returnUrl: ${VNPAY_RETURN_URL:}
+  hashSecret: ${VNPAY_HASH_SECRET:2WJP5Q16YSWL39AS8LM35TZQ696WO4C2}
+  payUrl: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  returnUrl: ${VNPAY_RETURN_URL:http://localhost:8081/api/bookings/payment-callback}
 gemini:
-  api-key: ${GEMINI_API_KEY:}
+  api-key: ${GEMINI_API_KEY:AIzaSyCSsMUvMbDLCwMNCeuWk-ufSsqxEy0DtwU}
   model: ${GEMINI_MODEL:gemini-3.5-flash}
 
 openai:
@@ -56,3 +56,4 @@ openai:
 
 chat:
   provider: ${CHAT_PROVIDER:gemini}
+

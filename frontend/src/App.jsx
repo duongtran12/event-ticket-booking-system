@@ -76,6 +76,7 @@ function App() {
   const [checkInFile, setCheckInFile] = useState(null);
   const [checkInResult, setCheckInResult] = useState(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
+  const [adminTab, setAdminTab] = useState('overview');
 
   const isAuthenticated = !!token;
   const isAdmin = userRole === 'ROLE_ADMIN';
@@ -219,6 +220,7 @@ function App() {
       totalTickets: eventData.totalTickets,
     });
     setActivePage(PAGES.ADMIN);
+    setAdminTab('form');
   };
 
   const handleCancelEdit = () => {
@@ -1077,194 +1079,454 @@ function App() {
             {!isAdmin ? (
               <div className="message-panel">Bạn không có quyền truy cập vào trang quản trị.</div>
             ) : (
-              <>
-                <div className="admin-grid">
-                  <div
-                    className="admin-panel"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '16px',
-                      minHeight: 'calc(100% + 10px)',
-                      paddingBottom: '30px',
-                      boxSizing: 'border-box',
-                      marginTop: '30px'
+              <div className="admin-dashboard">
+                {/* SIDEBAR NAVIGATION */}
+                <aside className="admin-sidebar">
+                  <div className="admin-sidebar-brand" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', width: '100%' }}>
+                    <div className="admin-sidebar-brand-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <strong>ADMIN PORTAL</strong>
+                      <span>Quản lý hệ thống</span>
+                    </div>
+                  </div>
+
+                  <div className="admin-nav-label">Menu Chính</div>
+
+                  <button
+                    type="button"
+                    className={`admin-nav-item ${adminTab === 'overview' ? 'active' : ''}`}
+                    onClick={() => setAdminTab('overview')}
+                  >
+                    <span className="admin-nav-item-icon">📊</span>
+                    <span>Tổng quan & Stats</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`admin-nav-item ${adminTab === 'events' ? 'active' : ''}`}
+                    onClick={() => setAdminTab('events')}
+                  >
+                    <span className="admin-nav-item-icon">🎟️</span>
+                    <span>Quản lý sự kiện</span>
+                    <span className="admin-nav-item-badge">{events.length}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`admin-nav-item ${adminTab === 'form' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (adminTab !== 'form') {
+                        handleCancelEdit();
+                      }
+                      setAdminTab('form');
                     }}
                   >
-                    <AdminForm
-                      values={adminValues}
-                      onChange={updateAdminValues}
-                      onSubmit={selectedEvent ? handleSaveEvent : handleCreateEvent}
-                      loading={adminLoading}
-                      submitLabel={selectedEvent ? 'Cập nhật sự kiện' : 'Tạo sự kiện'}
-                    />
-                    {selectedEvent && (
-                      <button
-                        className="secondary"
-                        type="button"
-                        onClick={handleCancelEdit}
-                        style={{
-                          width: '100%',
-                          height: '42px',
-                          background: '#f1f5f9',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          color: '#475569',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          transition: 'background 0.2s',
-                          marginTop: '-8px',
+                    <span className="admin-nav-item-icon">{selectedEvent ? '✏️' : '➕'}</span>
+                    <span>{selectedEvent ? 'Chỉnh sửa sự kiện' : 'Tạo sự kiện mới'}</span>
+                  </button>
+
+                  <div className="admin-nav-label" style={{ marginTop: '16px' }}>Công cụ</div>
+
+                  <button
+                    type="button"
+                    className={`admin-nav-item ${adminTab === 'checkin' ? 'active' : ''}`}
+                    onClick={() => setAdminTab('checkin')}
+                  >
+                    <span className="admin-nav-item-icon">📷</span>
+                    <span>Quét QR Check-in</span>
+                  </button>
+                </aside>
+
+                {/* MAIN DASHBOARD CONTENT */}
+                <main className="admin-main">
+                  {/* HEADER */}
+                  <div className="admin-main-header">
+                    <div>
+                      <h1>
+                        {adminTab === 'overview' && '📊 Thống kê & Tổng quan'}
+                        {adminTab === 'events' && '🎟️ Danh sách sự kiện'}
+                        {adminTab === 'form' && (selectedEvent ? '✏️ Chỉnh sửa sự kiện' : ' Tạo sự kiện mới')}
+                        {adminTab === 'checkin' && '📷 Kiểm soát vé vào cổng (Check-in)'}
+                      </h1>
+                      <p>Chào mừng trở lại, Administrator! Quản lý hoạt động bán vé dễ dàng.</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="admin-refresh-btn"
+                      onClick={() => {
+                        fetchAdminStats();
+                        fetchEvents();
+                      }}
+                    >
+                      🔄 Làm mới dữ liệu
+                    </button>
+                  </div>
+
+                  {/* TAB 1: OVERVIEW & STATS */}
+                  {adminTab === 'overview' && (
+                    <>
+                      {adminStats ? (
+                        <>
+                          <div className="admin-section-title">
+                            <h2>Chỉ số quan trọng</h2>
+{/*                             <span>Cập nhật thời gian thực</span> */}
+                          </div>
+
+                          <div className="admin-stats-grid">
+                            <div className="admin-stat-card accent-blue">
+                              <div className="admin-stat-card-top">
+                                <span>Tổng người dùng</span>
+                              </div>
+                              <strong>{adminStats.totalUsers}</strong>
+                            </div>
+
+                            <div className="admin-stat-card accent-violet">
+                              <div className="admin-stat-card-top">
+                                <span>Tổng sự kiện</span>
+                              </div>
+                              <strong>{adminStats.totalEvents}</strong>
+                            </div>
+
+                            <div className="admin-stat-card accent-emerald">
+                              <div className="admin-stat-card-top">
+                                <span>Tổng đơn đặt</span>
+                              </div>
+                              <strong>{adminStats.totalBookings}</strong>
+                            </div>
+
+                            <div className="admin-stat-card accent-amber">
+                              <div className="admin-stat-card-top">
+                                <span>Đang giữ chỗ</span>
+                              </div>
+                              <strong>{adminStats.reservedBookings}</strong>
+                            </div>
+
+                            <div className="admin-stat-card accent-green">
+                              <div className="admin-stat-card-top">
+                                <span>Vé đã bán</span>
+                              </div>
+                              <strong>{adminStats.soldBookings}</strong>
+                            </div>
+
+                            <div className="admin-stat-card accent-sky">
+                              <div className="admin-stat-card-top">
+                                <span>Vé còn lại</span>
+                              </div>
+                              <strong>{adminStats.availableTickets}</strong>
+                            </div>
+
+                            <div className="admin-stat-card accent-indigo">
+                              <div className="admin-stat-card-top">
+                                <span>Doanh thu xác nhận</span>
+                              </div>
+                              <strong>{Number(adminStats.totalRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                            </div>
+
+                            <div className="admin-stat-card accent-rose">
+                              <div className="admin-stat-card-top">
+                                <span>User active (7 ngày)</span>
+                              </div>
+                              <strong>{adminStats.activeUsers}</strong>
+                            </div>
+                          </div>
+
+                          <div className="admin-section-title" style={{ marginTop: '12px' }}>
+                            <h2>Phân tích doanh thu & Sự kiện HOT</h2>
+                          </div>
+
+                          <div className="admin-analytics-panel">
+                            <div className="analytics-card">
+                              <div className="analytics-card-header">
+                                <span>Doanh thu hôm nay</span>
+                                <strong>{Number(adminStats.dailyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                              </div>
+                              <div className="analytics-bar">
+                                <div
+                                  className="analytics-bar-fill bar-daily"
+                                  style={{
+                                    width: `${Math.min(
+                                      (Number(adminStats.dailyRevenue || 0) /
+                                        Math.max(Number(adminStats.monthlyRevenue || 1), 1)) *
+                                        100,
+                                      100
+                                    )}%`
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="analytics-card">
+                              <div className="analytics-card-header">
+                                <span>Doanh thu tuần này</span>
+                                <strong>{Number(adminStats.weeklyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                              </div>
+                              <div className="analytics-bar">
+                                <div
+                                  className="analytics-bar-fill bar-weekly"
+                                  style={{
+                                    width: `${Math.min(
+                                      (Number(adminStats.weeklyRevenue || 0) /
+                                        Math.max(Number(adminStats.monthlyRevenue || 1), 1)) *
+                                        100,
+                                      100
+                                    )}%`
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="analytics-card">
+                              <div className="analytics-card-header">
+                                <span>Doanh thu tháng này</span>
+                                <strong>{Number(adminStats.monthlyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
+                              </div>
+                              <div className="analytics-bar">
+                                <div className="analytics-bar-fill bar-monthly" style={{ width: '100%' }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="admin-panel-card" style={{ marginTop: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                              <div style={{ fontSize: '32px' }}>🏆</div>
+                              <div>
+                                <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: '#0f172a' }}>Sự kiện bán chạy nhất</h3>
+                                <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#6366f1' }}>
+                                  {adminStats.topEvent || 'Chưa có dữ liệu'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="message-panel">⏳ Đang tải thông tin thống kê...</div>
+                      )}
+                    </>
+                  )}
+
+                  {/* TAB 2: EVENTS MANAGEMENT TABLE */}
+                  {adminTab === 'events' && (
+                    <div className="admin-panel-card">
+                      <div className="admin-section-title">
+                        <h2>Danh sách sự kiện ({events.length})</h2>
+                        <button
+                          type="button"
+                          className="admin-btn-edit"
+                          onClick={() => {
+                            handleCancelEdit();
+                            setAdminTab('form');
+                          }}
+                        >
+                          ➕ Thêm sự kiện mới
+                        </button>
+                      </div>
+
+                      {events.length === 0 ? (
+                        <div className="message-panel">Chưa có sự kiện nào được tạo.</div>
+                      ) : (
+                        <div className="admin-table-wrapper">
+                          <table className="admin-table">
+                            <thead>
+                              <tr>
+                                <th>Sự kiện</th>
+                                <th>Địa điểm</th>
+                                <th>Thời gian</th>
+                                <th>Giá vé</th>
+                                <th>Vé còn lại / Tổng</th>
+                                <th>Hành động</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {events.map((ev) => (
+                                <tr key={ev.id}>
+                                  <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                      {ev.imageUrl ? (
+                                        <img
+                                          src={ev.imageUrl}
+                                          alt={ev.title}
+                                          style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }}
+                                        />
+                                      ) : (
+                                        <div style={{ width: 44, height: 44, borderRadius: 10, background: '#e2e8f0', display: 'grid', placeItems: 'center', fontSize: 18 }}>
+                                          🎪
+                                        </div>
+                                      )}
+                                      <div>
+                                        <strong>{ev.title}</strong>
+                                        <span>ID: {ev.id}</span>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td>{ev.location}</td>
+                                  <td>{new Date(ev.dateTime).toLocaleString('vi-VN')}</td>
+                                  <td>
+                                    <strong style={{ color: '#059669' }}>
+                                      {Number(ev.price).toLocaleString('vi-VN')} đ
+                                    </strong>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontWeight: 700, color: ev.availableTickets > 0 ? '#0284c7' : '#ef4444' }}>
+                                      {ev.availableTickets}
+                                    </span>{' '}
+                                    / {ev.totalTickets}
+                                  </td>
+                                  <td>
+                                    <div className="admin-table-actions">
+                                      <button type="button" className="admin-btn-edit" onClick={() => handleEditEvent(ev)}>
+                                         Sửa
+                                      </button>
+                                      <button type="button" className="admin-btn-delete" onClick={() => handleDeleteEvent(ev.id)}>
+                                         Xóa
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB 3: CREATE / EDIT FORM */}
+                  {adminTab === 'form' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <AdminForm
+                        values={adminValues}
+                        onChange={updateAdminValues}
+                        onSubmit={async (e) => {
+                          await (selectedEvent ? handleSaveEvent(e) : handleCreateEvent(e));
+                          setAdminTab('events');
                         }}
-                        onMouseOver={(e) => e.currentTarget.style.background = '#e2e8f0'}
-                        onMouseOut={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                      >
-                        Hủy chỉnh sửa
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="admin-events" style={{marginTop: '50px'}}>
-                    <div className="section-heading">
-                      <h2>Thống kê quản trị</h2>
-                      <p>Thông tin tổng quan về người dùng, sự kiện và đặt vé.</p>
-                    </div>
-                    {adminStats ? (
-                      <>
-                        <div className="admin-stats-grid">
-                          <article className="stat-card admin-stat-card">
-                            <span>Tổng người dùng</span>
-                            <strong>{adminStats.totalUsers}</strong>
-                          </article>
-                          <article className="stat-card admin-stat-card">
-                            <span>Tổng sự kiện</span>
-                            <strong>{adminStats.totalEvents}</strong>
-                          </article>
-                          <article className="stat-card admin-stat-card">
-                            <span>Tổng đơn đặt</span>
-                            <strong>{adminStats.totalBookings}</strong>
-                          </article>
-                          <article className="stat-card admin-stat-card">
-                            <span>Đang giữ chỗ</span>
-                            <strong>{adminStats.reservedBookings}</strong>
-                          </article>
-                          <article className="stat-card admin-stat-card">
-                            <span>Đã bán</span>
-                            <strong>{adminStats.soldBookings}</strong>
-                          </article>
-                          <article className="stat-card admin-stat-card">
-                            <span>Vé khả dụng</span>
-                            <strong>{adminStats.availableTickets}</strong>
-                          </article>
-                          <article className="stat-card admin-stat-card">
-                            <span>Doanh thu đã xác nhận</span>
-                            <strong>{Number(adminStats.totalRevenue || 0).toLocaleString('vi-VN')} đ</strong>
-                          </article>
-                          <article className="stat-card admin-stat-card">
-                            <span>Người dùng hoạt động (7 ngày)</span>
-                            <strong>{adminStats.activeUsers}</strong>
-                          </article>
-                          <article className="stat-card admin-stat-card">
-                            <span>Sự kiện bán chạy nhất</span>
-                            <strong>{adminStats.topEvent || 'Chưa có dữ liệu'}</strong>
-                          </article>
-                        </div>
-                        <div className="admin-analytics-panel">
-                          <div className="analytics-card">
-                            <div className="analytics-card-header">
-                              <span>Doanh thu hôm nay</span>
-                              <strong>{Number(adminStats.dailyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
-                            </div>
-                            <div className="analytics-bar">
-                              <div className="analytics-bar-fill" style={{ width: `${Math.min(Number(adminStats.dailyRevenue || 0) / Math.max(Number(adminStats.monthlyRevenue || 1), 1) * 100, 100)}%` }} />
-                            </div>
-                          </div>
-                          <div className="analytics-card">
-                            <div className="analytics-card-header">
-                              <span>Doanh thu tuần</span>
-                              <strong>{Number(adminStats.weeklyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
-                            </div>
-                            <div className="analytics-bar">
-                              <div className="analytics-bar-fill" style={{ width: `${Math.min(Number(adminStats.weeklyRevenue || 0) / Math.max(Number(adminStats.monthlyRevenue || 1), 1) * 100, 100)}%` }} />
-                            </div>
-                          </div>
-                          <div className="analytics-card">
-                            <div className="analytics-card-header">
-                              <span>Doanh thu tháng</span>
-                              <strong>{Number(adminStats.monthlyRevenue || 0).toLocaleString('vi-VN')} đ</strong>
-                            </div>
-                            <div className="analytics-bar">
-                              <div className="analytics-bar-fill" style={{ width: "100%" }} />
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="message-panel">Đang tải thống kê...</div>
-                    )}
-                    <div className="section-heading" style={{ marginTop: '24px' }}>
-                      <h2>Check-in vé</h2>
-                      <p>Upload ảnh QR của vé để xác nhận khách vào cổng.</p>
-                    </div>
-                    <form onSubmit={handleCheckIn} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(event) => setCheckInFile(event.target.files?.[0] || null)}
-                        style={{ padding: '10px', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+                        loading={adminLoading}
+                        submitLabel={selectedEvent ? 'Cập nhật sự kiện' : 'Tạo sự kiện'}
                       />
-                      <button type="submit" disabled={checkInLoading} style={{ width: 'fit-content', padding: '10px 16px', borderRadius: '8px', border: 'none', background: '#0f766e', color: '#fff', cursor: 'pointer' }}>
-                        {checkInLoading ? 'Đang xử lý...' : 'Quét check-in'}
-                      </button>
-                    </form>
-                    {checkInResult && (
-                      <div style={{ padding: '16px', borderRadius: '12px', boxShadow: '0 6px 18px rgba(15,23,42,0.06)', background: checkInResult.success ? '#f0fdf4' : '#fff1f2', color: checkInResult.success ? '#065f46' : '#7f1d1d', borderLeft: `6px solid ${checkInResult.success ? '#10b981' : '#ef4444'}` }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: 44, height: 44, borderRadius: 8, background: checkInResult.success ? '#ecfdf5' : '#fff1f2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                            {checkInResult.success ? '✔' : '✖'}
+                      {selectedEvent && (
+                        <div style={{ textAlign: 'center' }}>
+                          <button
+                            className="secondary"
+                            type="button"
+                            onClick={() => {
+                              handleCancelEdit();
+                              setAdminTab('events');
+                            }}
+                            style={{
+                              padding: '10px 24px',
+                              background: '#ffffff',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '10px',
+                              color: '#475569',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ❌ Hủy chỉnh sửa & quay lại danh sách
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB 4: CHECK-IN */}
+                  {adminTab === 'checkin' && (
+                    <div className="admin-panel-card" style={{ maxWidth: '680px', margin: '0 auto', width: '100%' }}>
+                      <div className="admin-panel-card-title">
+                        <div className="admin-panel-card-title-icon" style={{ background: '#f0fdf4', color: '#0f766e' }}>
+                          📷
+                        </div>
+                        <div>
+                          <h2>Quét QR Code Check-in</h2>
+                          <p>Tải lên hoặc quét mã QR trên vé của khách hàng để xác nhận vào cổng.</p>
+                        </div>
+                      </div>
+
+                      <form onSubmit={handleCheckIn}>
+                        <div className="checkin-dropzone">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(event) => setCheckInFile(event.target.files?.[0] || null)}
+                          />
+                          <div className="checkin-dropzone-icon">📥</div>
+                          <div className="checkin-dropzone-title">
+                            {checkInFile ? 'Đã chọn ảnh vé QR' : 'Nhấp hoặc kéo thả ảnh QR vào đây'}
                           </div>
-                          <div>
-                            <strong style={{ fontSize: 16 }}>{checkInResult.success ? 'Thành công' : 'Thất bại'}</strong>
-                            <div style={{ marginTop: 4 }}>{checkInResult.message}</div>
-                          </div>
+                          <div className="checkin-dropzone-sub">Hỗ trợ các định dạng PNG, JPG, JPEG</div>
+                          {checkInFile && (
+                            <div className="checkin-selected-name">
+                              📄 {checkInFile.name}
+                            </div>
+                          )}
                         </div>
 
-                        <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                          {checkInResult.customerName && <div><strong>Khách:</strong> {checkInResult.customerName}</div>}
-                          {checkInResult.eventTitle && <div><strong>Sự kiện:</strong> {checkInResult.eventTitle}</div>}
-                          {checkInResult.eventLocation && <div><strong>Địa điểm:</strong> {checkInResult.eventLocation}</div>}
-                          {checkInResult.checkedInAt && <div><strong>Thời gian check-in:</strong> {checkInResult.checkedInAt}</div>}
-                        </div>
-                      </div>
-                    )}
-                    <div className="section-heading" style={{ marginTop: '24px' }}>
-                      <h2>Quản lý sự kiện</h2>
-                      <p>Xem và chỉnh sửa các sự kiện hiện có.</p>
-                    </div>
-                    {events.length === 0 ? (
-                      <div className="message-panel">Không có sự kiện nào.</div>
-                    ) : (
-                      <div className="admin-event-list">
-                        {events.map((event) => (
-                          <article key={event.id} className="admin-event-card">
+                        <button type="submit" disabled={checkInLoading || !checkInFile} className="checkin-submit-btn">
+                          {checkInLoading ? '⏳ Đang quét & xử lý...' : ' Quét check-in ngay'}
+                        </button>
+                      </form>
+
+                      {checkInResult && (
+                        <div
+                          className="checkin-result"
+                          style={{
+                            background: checkInResult.success ? '#f0fdf4' : '#fff1f2',
+                            borderColor: checkInResult.success ? '#a7f3d0' : '#fecaca',
+                            color: checkInResult.success ? '#065f46' : '#991b1b'
+                          }}
+                        >
+                          <div className="checkin-result-header">
+                            <div
+                              className="checkin-result-icon"
+                              style={{
+                                background: checkInResult.success ? '#dcfce7' : '#fee2e2',
+                                color: checkInResult.success ? '#166534' : '#991b1b'
+                              }}
+                            >
+                              {checkInResult.success ? '✔' : '✖'}
+                            </div>
                             <div>
-                              <h3>{event.title}</h3>
-                              <p>{event.location} • {new Date(event.dateTime).toLocaleString('vi-VN')}</p>
+                              <strong style={{ fontSize: '1.1rem', display: 'block' }}>
+                                {checkInResult.success ? 'CHECK-IN THÀNH CÔNG' : 'CHECK-IN THẤT BẠI'}
+                              </strong>
+                              <span style={{ fontSize: '0.9rem' }}>{checkInResult.message}</span>
                             </div>
-                            <div className="admin-event-actions">
-                              <button type="button" onClick={() => handleEditEvent(event)}>
-                                Sửa
-                              </button>
-                              <button type="button" className="danger" onClick={() => handleDeleteEvent(event.id)}>
-                                Xóa
-                              </button>
+                          </div>
+
+                          {checkInResult.success && (
+                            <div className="checkin-result-body" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                              {checkInResult.customerName && (
+                                <div className="checkin-result-item">
+                                  <label>Tên khách hàng</label>
+                                  <span>{checkInResult.customerName}</span>
+                                </div>
+                              )}
+                              {checkInResult.eventTitle && (
+                                <div className="checkin-result-item">
+                                  <label>Sự kiện</label>
+                                  <span>{checkInResult.eventTitle}</span>
+                                </div>
+                              )}
+                              {checkInResult.eventLocation && (
+                                <div className="checkin-result-item">
+                                  <label>Địa điểm</label>
+                                  <span>{checkInResult.eventLocation}</span>
+                                </div>
+                              )}
+                              {checkInResult.checkedInAt && (
+                                <div className="checkin-result-item">
+                                  <label>Thời gian check-in</label>
+                                  <span>{checkInResult.checkedInAt}</span>
+                                </div>
+                              )}
                             </div>
-                          </article>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </main>
+              </div>
             )}
           </section>
         )}
