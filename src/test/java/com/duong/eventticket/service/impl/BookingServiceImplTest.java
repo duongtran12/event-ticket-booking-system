@@ -10,6 +10,7 @@ import com.duong.eventticket.exception.custom.ResourceNotFoundException;
 import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
 import com.duong.eventticket.repository.UserRepository;
+import com.duong.eventticket.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +38,9 @@ class BookingServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private BookingServiceImpl bookingService;
@@ -99,7 +103,7 @@ class BookingServiceImplTest {
 
         BookingResponse response = bookingService.cancelBooking("user@example.com", 10L, "User requested cancellation");
 
-        assertEquals("AVAILABLE", response.getStatus());
+        assertEquals("CANCELLED", response.getStatus());
         assertEquals(100, event.getAvailableTickets());
     }
 

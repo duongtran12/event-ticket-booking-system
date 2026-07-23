@@ -426,6 +426,11 @@ function App() {
 
     try {
       const data = await createPayment(token, bookingId);
+      if (!data?.paymentUrl) {
+        setMessage('Vé này đã được thanh toán trước đó.');
+        fetchBookings();
+        return;
+      }
       window.location.href = data.paymentUrl;
     } catch (e) {
       setError(e.message);
@@ -462,13 +467,31 @@ function App() {
       return;
     }
 
-    // Only complete payment when VNPAY returns success
-    if (responseCode !== '00') {
+    const paymentResult = params.get('paymentResult');
+
+    if (paymentResult === 'success') {
+      setMessage('Thanh toán thành công. Vé đã chuyển sang trạng thái SOLD.');
+      if (isAuthenticated) {
+        fetchBookings();
+        setActivePage(PAGES.BOOKINGS);
+      }
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('bookingId');
+        url.searchParams.delete('vnp_ResponseCode');
+        url.searchParams.delete('paymentResult');
+        window.history.replaceState({}, document.title, url.pathname + url.search);
+      } catch (ignore) {}
+      return;
+    }
+
+    if (paymentResult === 'failed' || responseCode !== '00') {
       setMessage('Thanh toán không hoàn tất. Vé vẫn giữ chỗ và bạn có thể thử lại.');
       try {
         const url = new URL(window.location.href);
         url.searchParams.delete('bookingId');
         url.searchParams.delete('vnp_ResponseCode');
+        url.searchParams.delete('paymentResult');
         window.history.replaceState({}, document.title, url.pathname + url.search);
       } catch (ignore) {}
       if (activePage === PAGES.BOOKINGS) {
@@ -480,8 +503,9 @@ function App() {
     try {
       await completePayment(token, bookingId);
       setMessage('Thanh toán thành công. Vé đã chuyển sang trạng thái SOLD.');
-      if (activePage === PAGES.BOOKINGS) {
+      if (isAuthenticated) {
         fetchBookings();
+        setActivePage(PAGES.BOOKINGS);
       }
       try {
         const url = new URL(window.location.href);

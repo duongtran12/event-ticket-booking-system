@@ -108,9 +108,20 @@ public class BookingController {
 
     @GetMapping("/payment-callback")
     @Operation(summary = "Handle payment callback")
-    public ResponseEntity<String> handlePaymentCallback(@RequestParam Map<String, String> params) {
+    public ResponseEntity<Void> handlePaymentCallback(@RequestParam Map<String, String> params) {
+        String bookingId = params.get("bookingId");
+        String responseCode = params.get("vnp_ResponseCode");
+        if (bookingId == null || responseCode == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         boolean success = bookingService.handlePaymentCallback(params);
-        return success ? ResponseEntity.ok("success") : ResponseEntity.badRequest().body("failed");
+        String result = success ? "success" : "failed";
+        String frontendUrl = "http://localhost:3000/?bookingId=" + bookingId
+                + "&vnp_ResponseCode=" + responseCode
+                + "&paymentResult=" + result;
+
+        return ResponseEntity.status(302).location(java.net.URI.create(frontendUrl)).build();
     }
 
     @PostMapping("/check-in")

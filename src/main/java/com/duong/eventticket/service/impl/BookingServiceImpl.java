@@ -11,6 +11,7 @@ import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
 import com.duong.eventticket.repository.UserRepository;
 import com.duong.eventticket.service.BookingService;
+import com.duong.eventticket.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -44,6 +45,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     @Value("${vnpay.tmnCode:}")
     private String vnpTmnCode;
@@ -54,7 +56,7 @@ public class BookingServiceImpl implements BookingService {
     @Value("${vnpay.payUrl:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
     private String vnpPayUrl;
 
-    @Value("${vnpay.returnUrl:http://localhost:3000/}")
+    @Value("${vnpay.returnUrl:http://localhost:8081/api/bookings/payment-callback}")
     private String vnpReturnUrl;
 
     @Override
@@ -192,6 +194,10 @@ public class BookingServiceImpl implements BookingService {
             throw new AccessDeniedException("You do not have permission to pay this booking");
         }
 
+        if (booking.getStatus() == BookingStatus.SOLD) {
+            return "";
+        }
+
         if (booking.getStatus() != BookingStatus.RESERVED) {
             throw new IllegalArgumentException("Only RESERVED bookings can be paid. Current status: " + booking.getStatus());
         }
@@ -257,6 +263,7 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(BookingStatus.SOLD);
         Booking saved = bookingRepository.save(booking);
+        emailService.sendTicketEmail(saved);
         return mapToResponse(saved);
     }
 
@@ -278,7 +285,8 @@ public class BookingServiceImpl implements BookingService {
                 booking.setQrCodeValue(buildQrCodeValue(booking));
             }
             booking.setStatus(BookingStatus.SOLD);
-            bookingRepository.save(booking);
+            Booking saved = bookingRepository.save(booking);
+            emailService.sendTicketEmail(saved);
             return true;
         }
         return false;
