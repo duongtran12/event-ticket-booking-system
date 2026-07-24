@@ -5,10 +5,12 @@ import com.duong.eventticket.dto.response.BookingResponse;
 import com.duong.eventticket.entity.Booking;
 import com.duong.eventticket.entity.BookingStatus;
 import com.duong.eventticket.entity.Event;
+import com.duong.eventticket.entity.TicketType;
 import com.duong.eventticket.entity.User;
 import com.duong.eventticket.exception.custom.ResourceNotFoundException;
 import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
+import com.duong.eventticket.repository.TicketTypeRepository;
 import com.duong.eventticket.repository.UserRepository;
 import com.duong.eventticket.service.BookingService;
 import com.duong.eventticket.service.EmailService;
@@ -44,6 +46,7 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final EventRepository eventRepository;
+    private final TicketTypeRepository ticketTypeRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
 
@@ -69,10 +72,21 @@ public class BookingServiceImpl implements BookingService {
         Event event = eventRepository.findByIdWithLock(request.getEventId())
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + request.getEventId()));
 
-        if (event.getAvailableTickets() < request.getQuantity()) {
+        if (request.getTicketTypeId() == null) {
+            throw new IllegalArgumentException("Ticket type is required");
+        }
+
+        TicketType ticketType = ticketTypeRepository.findByIdWithLock(request.getTicketTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket type not found with id: " + request.getTicketTypeId()));
+
+        if (!ticketType.getEvent().getId().equals(event.getId())) {
+            throw new IllegalArgumentException("Ticket type does not belong to selected event");
+        }
+
+        if (ticketType.getAvailableTickets() < request.getQuantity()) {
             throw new IllegalArgumentException(
-                    "Not enough tickets available. Requested: " + request.getQuantity()
-                    + ", Available: " + event.getAvailableTickets()
+                    "Not enough tickets available for selected ticket type. Requested: " + request.getQuantity()
+                    + ", Available: " + ticketType.getAvailableTickets()
             );
         }
 
@@ -80,14 +94,17 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Không thể đặt vé khi còn dưới 2 tiếng trước giờ diễn.");
         }
 
+        ticketType.setAvailableTickets(ticketType.getAvailableTickets() - request.getQuantity());
         event.setAvailableTickets(event.getAvailableTickets() - request.getQuantity());
+        ticketTypeRepository.save(ticketType);
         eventRepository.save(event);
 
-        BigDecimal totalPrice = event.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
+        BigDecimal totalPrice = ticketType.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
 
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setEvent(event);
+        booking.setTicketType(ticketType);
         booking.setQuantity(request.getQuantity());
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.RESERVED);
@@ -147,6 +164,15 @@ public class BookingServiceImpl implements BookingService {
             Event event = eventRepository.findByIdWithLock(booking.getEvent().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
             event.setAvailableTickets(event.getAvailableTickets() + booking.getQuantity());
+
+            if (booking.getTicketType() != null && booking.getTicketType().getId() != null) {
+                ticketTypeRepository.findByIdWithLock(booking.getTicketType().getId())
+                        .ifPresent(ticketType -> {
+                            ticketType.setAvailableTickets(ticketType.getAvailableTickets() + booking.getQuantity());
+                            ticketTypeRepository.save(ticketType);
+                        });
+            }
+
             eventRepository.save(event);
             booking.setStatus(BookingStatus.EXPIRED);
             bookingRepository.save(booking);
@@ -173,6 +199,14 @@ public class BookingServiceImpl implements BookingService {
 
         Event event = eventRepository.findByIdWithLock(booking.getEvent().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        if (booking.getTicketType() != null && booking.getTicketType().getId() != null) {
+            ticketTypeRepository.findByIdWithLock(booking.getTicketType().getId())
+                    .ifPresent(ticketType -> {
+                        ticketType.setAvailableTickets(ticketType.getAvailableTickets() + booking.getQuantity());
+                        ticketTypeRepository.save(ticketType);
+                    });
+        }
 
         event.setAvailableTickets(event.getAvailableTickets() + booking.getQuantity());
         eventRepository.save(event);
@@ -432,7 +466,10 @@ public class BookingServiceImpl implements BookingService {
         response.setEventTitle(booking.getEvent().getTitle());
         response.setEventLocation(booking.getEvent().getLocation());
         response.setEventDateTime(booking.getEvent().getDateTime());
-        response.setEventPrice(booking.getEvent().getPrice());
+        response.setEventPrice(booking.getTicketType() != null ? booking.getTicketType().getPrice() : booking.getEvent().getPrice());
+        response.setTicketTypeId(booking.getTicketType() != null ? booking.getTicketType().getId() : null);
+        response.setTicketTypeName(booking.getTicketType() != null ? booking.getTicketType().getName() : null);
+        response.setTicketTypePrice(booking.getTicketType() != null ? booking.getTicketType().getPrice() : null);
         response.setUserId(booking.getUser().getId());
         response.setUserEmail(booking.getUser().getEmail());
         response.setBuyerName(booking.getUser().getFullName());

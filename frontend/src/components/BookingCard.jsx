@@ -88,6 +88,11 @@ export function BookingCard({ booking, onPay, onCancel }) {
             </div>
 
             <div className="ticket-pass-field">
+              <span> Loại vé</span>
+              <p>{booking.ticketTypeName || '---'}</p>
+            </div>
+
+            <div className="ticket-pass-field">
               <span> Giá vé</span>
               <p style={{ color: '#2563eb' }}>
                 {Number(booking.eventPrice || 0).toLocaleString('vi-VN')}₫

@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -79,8 +80,11 @@ class EventServiceImplTest {
         request.setDescription("A practical backend workshop");
         request.setLocation("Ho Chi Minh City");
         request.setDateTime(LocalDateTime.now().plusDays(1));
-        request.setPrice(BigDecimal.valueOf(150000));
-        request.setTotalTickets(totalTickets);
+        com.duong.eventticket.dto.request.TicketTypeRequest ticketType = new com.duong.eventticket.dto.request.TicketTypeRequest();
+        ticketType.setName("General");
+        ticketType.setPrice(BigDecimal.valueOf(150000));
+        ticketType.setTotalTickets(totalTickets);
+        request.setTicketTypes(List.of(ticketType));
         return request;
     }
 }

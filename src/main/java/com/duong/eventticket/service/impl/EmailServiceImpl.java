@@ -116,6 +116,7 @@ public class EmailServiceImpl implements EmailService {
                 + buildRow(" Địa điểm", escapeHtml(booking.getEvent().getLocation()))
                 + buildRow(" Thời gian", formattedDate)
                 + buildRow(" Số lượng vé", booking.getQuantity() + " vé")
+                + buildRow(" Loại vé", booking.getTicketType() != null ? escapeHtml(booking.getTicketType().getName()) : "---")
                 + buildRow(" Tổng tiền", formattedPrice)
                 + "</table>"
 

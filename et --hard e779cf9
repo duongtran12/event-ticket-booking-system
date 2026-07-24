@@ -1,0 +1,45 @@
+[33m3fe99b9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: update .gitignore
+[33me779cf9[m feat(booking): redirect to pending payments in my-tickets on booking and fix page reload state
+[33mc61b693[m feat(ui): upgrade homepage layout and design
+[33m1ca24ce[m fix(ui): fix QR code zoom display bug
+[33mb3cbeb9[m feat(ui): center content alignment in my-tickets statistics items
+[33m0d42fdc[m feat(admin): upgrade and center admin dashboard UI layout
+[33m9e6cfd0[m feat: integrate email service to send ticket details upon payment success
+[33m7fb990b[m feat: integrate QR code generation and image-based ticket check-in system
+[33m2f72a11[m feat: integrate AI chatbot feature into backend and frontend
+[33mf11ae5d[m feat: implement per-user ticket storage, auto-inventory reduction, and 2h pre-event booking constraint
+[33m7078608[m feat: complete backend implementation for ticket cancellation and admin dashboard
+[33mdee197a[m feat: implement ticket management system (storage, cancellation) and admin dashboard
+[33m9afa73a[m Prepare AWS deployment
+[33m7d81f67[m update frontend
+[33m41498b4[m feat: add user profile fields to register/edit and redesign auth, profile & admin UI
+[33m6b5bc9f[m style: redesign EventCard and admin dashboard UI
+[33mada46b1[m fix(payment): prevent cancelled payments from being marked as successful
+[33md966ec9[m feat: implement UI and backend for payment, statistics, and profile
+[33mceb2b85[m chore(docker): enable containerized local run
+[33m74dceff[m test(api): cover auth controller delegation
+[33mcad85fc[m test(api): cover event controller routing
+[33m92bd065[m test(auth): cover auth service rules
+[33maa42153[m test(booking): cover booking service rules
+[33mc7850ca[m test(event): cover event service business rules
+[33m2b4600e[m test(validation): add dto validation coverage
+[33m6725589[m docs: add project readme
+[33m2db6550[m feat(api): strengthen request validation
+[33md414677[m feat(api): document core controllers for swagger
+[33m1253e05[m feat(api): add swagger openapi support
+[33m4ce1d7a[m refactor(event): simplify event update logic
+[33m3a28b7b[m feat(auth): strengthen user registration validation
+[33m5f67492[m refactor(event): sanitize event sorting parameters
+[33m21d8928[m refactor(event): align event entity constraints
+[33m6217fff[m refactor(api): standardize global exception handling
+[33m8e363a2[m feat(event): improve event request validation
+[33m41c81a2[m feat(booking): implement ticket booking system with pessimistic lock and cancellation
+[33md9804a9[m feat(event): implement CRUD APIs and optimize JWT security and validation
+[33mbd98017[m refactor(auth): optimize JWT service, request validation, and exception handling
+[33m7fb059b[m Implement JWT authentication and login functionality
+[33m2976222[m Complete user registration feature
+[33m35c2a8b[m Setup authentication module and role initialization
+[33m00ba9f4[m Implement user registration service and DTO validation
+[33m4094c93[m Create user and role repositories
+[33m06cd187[m Create Role entity and RoleName enum
+[33m30c07d2[m Initial Spring Boot and Docker setup

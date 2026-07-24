@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -41,8 +42,11 @@ class EventticketApplicationTests {
 		request.setDescription("A practical backend workshop");
 		request.setLocation("Ho Chi Minh City");
 		request.setDateTime(LocalDateTime.now().plusDays(1));
-		request.setPrice(java.math.BigDecimal.valueOf(150000));
-		request.setTotalTickets(100);
+		request.setTicketTypes(List.of(new com.duong.eventticket.dto.request.TicketTypeRequest() {{
+			setName("General");
+			setPrice(java.math.BigDecimal.valueOf(150000));
+			setTotalTickets(100);
+		}}));
 
 		Set<ConstraintViolation<EventRequest>> violations = validator.validate(request);
 

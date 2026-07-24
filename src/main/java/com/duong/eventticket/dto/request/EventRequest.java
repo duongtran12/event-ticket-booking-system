@@ -3,13 +3,12 @@ package com.duong.eventticket.dto.request;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -33,11 +32,6 @@ public class EventRequest {
     @Future(message = "Event date must be in the future")
     private LocalDateTime dateTime;
 
-    @NotNull(message = "Price is required")
-    @PositiveOrZero(message = "Price must be zero or positive")
-    private BigDecimal price;
-
-    @NotNull(message = "Total tickets is required")
-    @PositiveOrZero(message = "Total tickets must be zero or positive")
-    private Integer totalTickets;
+    @NotNull(message = "Ticket types are required")
+    private List<TicketTypeRequest> ticketTypes;
 }

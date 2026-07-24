@@ -5,10 +5,12 @@ import com.duong.eventticket.dto.response.BookingResponse;
 import com.duong.eventticket.entity.Booking;
 import com.duong.eventticket.entity.BookingStatus;
 import com.duong.eventticket.entity.Event;
+import com.duong.eventticket.entity.TicketType;
 import com.duong.eventticket.entity.User;
 import com.duong.eventticket.exception.custom.ResourceNotFoundException;
 import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
+import com.duong.eventticket.repository.TicketTypeRepository;
 import com.duong.eventticket.repository.UserRepository;
 import com.duong.eventticket.service.EmailService;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,9 @@ class BookingServiceImplTest {
     private EventRepository eventRepository;
 
     @Mock
+    private TicketTypeRepository ticketTypeRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -49,10 +54,13 @@ class BookingServiceImplTest {
     void createBookingShouldReserveTicketsAndReturnReservedBooking() {
         User user = buildUser();
         Event event = buildEvent(100, 100000);
-        BookingRequest request = buildBookingRequest(1L, 3);
+        BookingRequest request = buildBookingRequest(1L, 3, 10L);
+        TicketType ticketType = buildTicketType(10L, event, BigDecimal.valueOf(100000), 100);
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(eventRepository.findByIdWithLock(1L)).thenReturn(Optional.of(event));
+        when(ticketTypeRepository.findByIdWithLock(10L)).thenReturn(Optional.of(ticketType));
+        when(ticketTypeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -129,7 +137,7 @@ class BookingServiceImplTest {
         when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> bookingService.createBooking("missing@example.com", buildBookingRequest(1L, 1)));
+                () -> bookingService.createBooking("missing@example.com", buildBookingRequest(1L, 1, 10L)));
     }
 
     private User buildUser() {
@@ -154,10 +162,22 @@ class BookingServiceImplTest {
         return event;
     }
 
-    private BookingRequest buildBookingRequest(Long eventId, Integer quantity) {
+    private BookingRequest buildBookingRequest(Long eventId, Integer quantity, Long ticketTypeId) {
         BookingRequest request = new BookingRequest();
         request.setEventId(eventId);
         request.setQuantity(quantity);
+        request.setTicketTypeId(ticketTypeId);
         return request;
+    }
+
+    private TicketType buildTicketType(Long id, Event event, BigDecimal price, int availableTickets) {
+        TicketType ticketType = new TicketType();
+        ticketType.setId(id);
+        ticketType.setEvent(event);
+        ticketType.setName("General");
+        ticketType.setPrice(price);
+        ticketType.setAvailableTickets(availableTickets);
+        ticketType.setTotalTickets(availableTickets);
+        return ticketType;
     }
 }

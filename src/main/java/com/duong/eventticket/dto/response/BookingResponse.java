@@ -16,6 +16,9 @@ public class BookingResponse {
     private String eventLocation;
     private LocalDateTime eventDateTime;
     private BigDecimal eventPrice;
+    private Long ticketTypeId;
+    private String ticketTypeName;
+    private BigDecimal ticketTypePrice;
     private Long userId;
     private String userEmail;
     private String buyerName;

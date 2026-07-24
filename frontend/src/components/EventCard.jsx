@@ -1,4 +1,4 @@
-export function EventCard({ event, quantity, onQuantityChange, onBook, isSaved, onToggleSave }) {
+export function EventCard({ event, quantity, onQuantityChange, onBook, selectedTicketTypeId, onTicketTypeChange, isSaved, onToggleSave }) {
   const priceValue = event.price ? Number(event.price) : 0;
   const eventDate = event.dateTime ? new Date(event.dateTime) : null;
   const isClosed = eventDate ? eventDate.getTime() - Date.now() <= 2 * 60 * 60 * 1000 : false;
@@ -199,64 +199,92 @@ export function EventCard({ event, quantity, onQuantityChange, onBook, isSaved, 
         </div>
       </div>
 
-      {/* CARD ACTION (QUANTITY & BOOK BUTTON) */}
+      {/* CARD ACTION (QUANTITY, TICKET TYPE & BOOK BUTTON) */}
       <div
         style={{
           padding: '0 20px 20px 20px',
           display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
+          flexDirection: 'column',
+          gap: '12px'
         }}
       >
-        <div style={{ width: '60px' }}>
-          <input
-            id={`quantity-${event.id}`}
-            type="number"
-            min="1"
-            max={event.availableTickets || 10}
-            value={quantity}
-            onChange={(e) => onQuantityChange(event.id, Number(e.target.value))}
+        {event.ticketTypes && event.ticketTypes.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>Chọn loại vé</label>
+            <select
+              value={selectedTicketTypeId || ''}
+              onChange={(e) => onTicketTypeChange(event.id, Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '10px',
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                outline: 'none',
+                background: '#ffffff'
+              }}
+            >
+              <option value="">Chọn loại vé</option>
+              {event.ticketTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name} - {Number(type.price).toLocaleString('vi-VN')}₫ ({type.availableTickets} còn lại)
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '60px' }}>
+            <input
+              id={`quantity-${event.id}`}
+              type="number"
+              min="1"
+              max={event.availableTickets || 10}
+              value={quantity}
+              onChange={(e) => onQuantityChange(event.id, Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '9px',
+                borderRadius: '10px',
+                border: '1px solid #cbd5e1',
+                fontSize: '13.5px',
+                fontWeight: '700',
+                textAlign: 'center',
+                outline: 'none',
+                color: '#0f172a',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => canBook && onBook(event.id, selectedTicketTypeId)}
+            disabled={!canBook}
             style={{
-              width: '100%',
-              padding: '9px',
+              flex: 1,
+              height: '42px',
+              backgroundColor: canBook ? '#2563eb' : '#cbd5e1',
+              color: '#ffffff',
+              border: 'none',
               borderRadius: '10px',
-              border: '1px solid #cbd5e1',
               fontSize: '13.5px',
               fontWeight: '700',
-              textAlign: 'center',
-              outline: 'none',
-              color: '#0f172a',
-              boxSizing: 'border-box'
+              cursor: canBook ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s ease',
+              boxShadow: canBook ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
             }}
-          />
+            onMouseOver={(e) => {
+              if (canBook) e.currentTarget.style.backgroundColor = '#1d4ed8';
+            }}
+            onMouseOut={(e) => {
+              if (canBook) e.currentTarget.style.backgroundColor = '#2563eb';
+            }}
+          >
+            {event.availableTickets <= 0 ? 'Hết vé' : isClosed ? 'Đóng vé' : 'Đặt vé ngay'}
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => canBook && onBook(event.id)}
-          disabled={!canBook}
-          style={{
-            flex: 1,
-            height: '42px',
-            backgroundColor: canBook ? '#2563eb' : '#cbd5e1',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '10px',
-            fontSize: '13.5px',
-            fontWeight: '700',
-            cursor: canBook ? 'pointer' : 'not-allowed',
-            transition: 'all 0.2s ease',
-            boxShadow: canBook ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
-          }}
-          onMouseOver={(e) => {
-            if (canBook) e.currentTarget.style.backgroundColor = '#1d4ed8';
-          }}
-          onMouseOut={(e) => {
-            if (canBook) e.currentTarget.style.backgroundColor = '#2563eb';
-          }}
-        >
-          {event.availableTickets <= 0 ? 'Hết vé' : isClosed ? 'Đóng vé' : 'Đặt vé ngay'}
-        </button>
       </div>
     </article>
   );

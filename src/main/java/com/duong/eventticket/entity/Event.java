@@ -9,6 +9,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "events")
@@ -44,6 +46,9 @@ public class Event {
 
     @Column(nullable = false)
     private Integer availableTickets;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TicketType> ticketTypes = new ArrayList<>();
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

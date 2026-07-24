@@ -32,6 +32,7 @@ function App() {
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
   const [bookingQuantities, setBookingQuantities] = useState({});
+  const [selectedTicketTypes, setSelectedTicketTypes] = useState({});
   const [token, setToken] = useState(localStorage.getItem('jwtToken') || '');
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
   const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || '');
@@ -62,8 +63,7 @@ function App() {
     location: '',
     imageUrl: '',
     dateTime: '',
-    price: '',
-    totalTickets: '',
+    ticketTypes: [{ name: '', price: '', totalTickets: '' }],
   });
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminStats, setAdminStats] = useState(null);
@@ -204,11 +204,14 @@ function App() {
         location: adminValues.location,
         imageUrl: adminValues.imageUrl,
         dateTime: adminValues.dateTime,
-        price: Number(adminValues.price),
-        totalTickets: Number(adminValues.totalTickets),
+        ticketTypes: adminValues.ticketTypes.map((type) => ({
+          name: type.name,
+          price: Number(type.price),
+          totalTickets: Number(type.totalTickets),
+        })),
       };
       await createEvent(token, payload);
-      setAdminValues({ title: '', description: '', location: '', imageUrl: '', dateTime: '', price: '', totalTickets: '' });
+      setAdminValues({ title: '', description: '', location: '', imageUrl: '', dateTime: '', ticketTypes: [{ name: '', price: '', totalTickets: '' }] });
       setMessage('Sự kiện mới đã được tạo thành công.');
       setActivePage(PAGES.HOME);
       fetchEvents();
@@ -228,8 +231,11 @@ function App() {
       location: eventData.location,
       imageUrl: eventData.imageUrl || '',
       dateTime: eventData.dateTime,
-      price: eventData.price,
-      totalTickets: eventData.totalTickets,
+      ticketTypes: eventData.ticketTypes?.map((type) => ({
+        name: type.name,
+        price: type.price,
+        totalTickets: type.totalTickets,
+      })) || [{ name: '', price: '', totalTickets: '' }],
     });
     setActivePage(PAGES.ADMIN);
     setAdminTab('form');
@@ -238,7 +244,7 @@ function App() {
   const handleCancelEdit = () => {
     setEditMode(false);
     setSelectedEvent(null);
-    setAdminValues({ title: '', description: '', location: '', imageUrl: '', dateTime: '', price: '', totalTickets: '' });
+    setAdminValues({ title: '', description: '', location: '', imageUrl: '', dateTime: '', ticketTypes: [{ name: '', price: '', totalTickets: '' }] });
   };
 
   const handleSaveEvent = async (event) => {
@@ -254,8 +260,11 @@ function App() {
         location: adminValues.location,
         imageUrl: adminValues.imageUrl,
         dateTime: adminValues.dateTime,
-        price: Number(adminValues.price),
-        totalTickets: Number(adminValues.totalTickets),
+        ticketTypes: adminValues.ticketTypes.map((type) => ({
+          name: type.name,
+          price: Number(type.price),
+          totalTickets: Number(type.totalTickets),
+        })),
       };
 
       if (selectedEvent) {
@@ -357,7 +366,7 @@ function App() {
     }
   };
 
-  const handleBookTicket = async (eventId) => {
+  const handleBookTicket = async (eventId, ticketTypeId) => {
     if (!isAuthenticated) {
       setError('Bạn cần đăng nhập để đặt vé.');
       setActivePage(PAGES.LOGIN);
@@ -368,14 +377,28 @@ function App() {
     setError(null);
     setMessage(null);
 
+    if (!ticketTypeId) {
+      setError('Vui lòng chọn loại vé trước khi đặt.');
+      return;
+    }
+
     try {
-      const booking = await createBooking(token, eventId, quantity);
+      const booking = await createBooking(token, eventId, quantity, ticketTypeId);
       setMessage(`Đã giữ chỗ vé cho ${booking.eventTitle}. Vui lòng thanh toán trong 10 phút để giữ vé.`);
       setBookingQuantities((current) => ({ ...current, [eventId]: 1 }));
+      setSelectedTicketTypes((current) => ({ ...current, [eventId]: null }));
       setEvents((currentEvents) =>
         currentEvents.map((event) =>
           event.id === eventId
-            ? { ...event, availableTickets: Math.max((event.availableTickets || 0) - quantity, 0) }
+            ? {
+                ...event,
+                availableTickets: Math.max((event.availableTickets || 0) - quantity, 0),
+                ticketTypes: event.ticketTypes?.map((type) =>
+                  type.id === ticketTypeId
+                    ? { ...type, availableTickets: Math.max((type.availableTickets || 0) - quantity, 0) }
+                    : type
+                )
+              }
             : event
         )
       );
@@ -552,6 +575,10 @@ function App() {
 
   const handleQuantityChange = (eventId, quantity) => {
     setBookingQuantities((current) => ({ ...current, [eventId]: quantity }));
+  };
+
+  const handleTicketTypeChange = (eventId, ticketTypeId) => {
+    setSelectedTicketTypes((current) => ({ ...current, [eventId]: ticketTypeId }));
   };
 
   const handleSearch = async (event) => {
@@ -884,6 +911,8 @@ function App() {
                       event={event}
                       quantity={bookingQuantities[event.id] || 1}
                       onQuantityChange={handleQuantityChange}
+                      selectedTicketTypeId={selectedTicketTypes[event.id]}
+                      onTicketTypeChange={handleTicketTypeChange}
                       onBook={handleBookTicket}
                       isSaved={savedEventIds.includes(event.id)}
                       onToggleSave={handleToggleSaveEvent}

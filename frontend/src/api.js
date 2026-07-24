@@ -125,14 +125,14 @@ export async function deleteEvent(token, eventId) {
   return handleResponse(response);
 }
 
-export async function createBooking(token, eventId, quantity) {
+export async function createBooking(token, eventId, quantity, ticketTypeId) {
   const response = await fetch(`${API_BASE}/bookings`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ eventId, quantity }),
+    body: JSON.stringify({ eventId, ticketTypeId, quantity }),
   });
 
   return handleResponse(response);

@@ -66,35 +66,96 @@ export function AdminForm({ values, onChange, onSubmit, loading, submitLabel = '
           />
         </div>
 
-        <div style={fieldContainerStyle}>
+        <div style={{ gridColumn: '1 / -1', ...fieldContainerStyle }}>
           <label style={labelStyle}>
-            <span> Giá vé (VNĐ)</span> <span style={{ color: '#ef4444' }}>*</span>
+            <span> Các loại vé</span> <span style={{ color: '#ef4444' }}>*</span>
           </label>
-          <input
-            value={values.price}
-            onChange={(e) => onChange('price', e.target.value)}
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="Ví dụ: 500000"
-            required
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={fieldContainerStyle}>
-          <label style={labelStyle}>
-            <span> Tổng số lượng vé</span> <span style={{ color: '#ef4444' }}>*</span>
-          </label>
-          <input
-            value={values.totalTickets}
-            onChange={(e) => onChange('totalTickets', e.target.value)}
-            type="number"
-            min="0"
-            placeholder="Ví dụ: 200"
-            required
-            style={inputStyle}
-          />
+          {(values.ticketTypes || []).map((ticketType, index) => (
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', marginBottom: '12px', alignItems: 'end' }}>
+              <div>
+                <input
+                  value={ticketType.name || ''}
+                  onChange={(e) => {
+                    const next = [...(values.ticketTypes || [])];
+                    next[index] = { ...next[index], name: e.target.value };
+                    onChange('ticketTypes', next);
+                  }}
+                  type="text"
+                  placeholder="Tên loại vé"
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <input
+                  value={ticketType.price || ''}
+                  onChange={(e) => {
+                    const next = [...(values.ticketTypes || [])];
+                    next[index] = { ...next[index], price: e.target.value };
+                    onChange('ticketTypes', next);
+                  }}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Giá vé"
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <input
+                  value={ticketType.totalTickets || ''}
+                  onChange={(e) => {
+                    const next = [...(values.ticketTypes || [])];
+                    next[index] = { ...next[index], totalTickets: e.target.value };
+                    onChange('ticketTypes', next);
+                  }}
+                  type="number"
+                  min="0"
+                  placeholder="Số vé"
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = (values.ticketTypes || []).filter((_, idx) => idx !== index);
+                  onChange('ticketTypes', next.length ? next : [{ name: '', price: '', totalTickets: '' }]);
+                }}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                  color: '#ef4444',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  minWidth: '52px'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              onChange('ticketTypes', [...(values.ticketTypes || []), { name: '', price: '', totalTickets: '' }]);
+            }}
+            style={{
+              width: '100%',
+              padding: '11px 15px',
+              borderRadius: '12px',
+              border: '1px dashed #cbd5e1',
+              background: '#f8fafc',
+              color: '#0f172a',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            + Thêm loại vé
+          </button>
         </div>
 
         <div style={{ gridColumn: '1 / -1', ...fieldContainerStyle }}>
