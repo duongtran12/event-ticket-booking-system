@@ -7,7 +7,7 @@ import { AdminForm } from './components/AdminForm';
 import { ProfilePage } from './components/ProfilePage';
 import { ProfileEditForm } from './components/ProfileEditForm';
 import { ChatBox } from './components/ChatBox';
-import { checkInBooking, completePayment, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, sendChatMessage, updateEvent, updateUserProfile } from './api';
+import { checkInBooking, completePayment, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, refundBooking, sendChatMessage, updateEvent, updateUserProfile } from './api';
 
 const PAGES = {
   HOME: 'home',
@@ -432,6 +432,40 @@ function App() {
         currentEvents.map((event) =>
           event.id === cancelledBooking.eventId
             ? { ...event, availableTickets: Math.max((event.availableTickets || 0) + cancelledBooking.quantity, 0) }
+            : event
+        )
+      );
+      fetchBookings();
+      if (activePage === PAGES.HOME) {
+        fetchEvents();
+      }
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const handleRefundBooking = async (bookingId) => {
+    if (!isAuthenticated) {
+      setError('Bạn cần đăng nhập để yêu cầu hoàn vé.');
+      setActivePage(PAGES.LOGIN);
+      return;
+    }
+
+    const reason = window.prompt('Nhập lý do hoàn vé (tùy chọn):', 'Yêu cầu hoàn vé vì thay đổi kế hoạch');
+    if (reason === null) {
+      return;
+    }
+
+    setError(null);
+    setMessage(null);
+
+    try {
+      const refundedBooking = await refundBooking(token, bookingId, reason.trim() || 'Yêu cầu hoàn vé');
+      setMessage('Yêu cầu hoàn vé đã được xử lý. Số lượng vé đã được trả về pool vé khả dụng.');
+      setEvents((currentEvents) =>
+        currentEvents.map((event) =>
+          event.id === refundedBooking.eventId
+            ? { ...event, availableTickets: Math.max((event.availableTickets || 0) + refundedBooking.quantity, 0) }
             : event
         )
       );
@@ -1173,6 +1207,7 @@ function App() {
                               booking={booking}
                               onPay={handlePayBooking}
                               onCancel={handleCancelBooking}
+                              onRefund={handleRefundBooking}
                             />
                           ))}
                         </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function BookingCard({ booking, onPay, onCancel }) {
+export function BookingCard({ booking, onPay, onCancel, onRefund }) {
   const [showQrModal, setShowQrModal] = useState(false);
   const totalPrice = booking.totalPrice ? Number(booking.totalPrice) : 0;
   const statusClass = (booking.status || '').toLowerCase();
@@ -8,6 +8,7 @@ export function BookingCard({ booking, onPay, onCancel }) {
   const statusLabelMap = {
     RESERVED: 'Chờ thanh toán',
     SOLD: 'Đã thanh toán',
+    REFUNDED: 'Đã hoàn tiền',
     AVAILABLE: 'Sẵn sàng',
     EXPIRED: 'Hết hạn thanh toán',
     CANCELLED: 'Đã hủy',
@@ -18,6 +19,7 @@ export function BookingCard({ booking, onPay, onCancel }) {
   const statusColors = {
     RESERVED: { text: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: '⏳' },
     SOLD: { text: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: '🎟️' },
+    REFUNDED: { text: '#047857', bg: '#ecfdf5', border: '#a7f3d0', icon: '💸' },
     CONFIRMED: { text: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: '✅' },
     AVAILABLE: { text: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: '⚡' },
     PENDING: { text: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: '⏳' },
@@ -133,6 +135,21 @@ export function BookingCard({ booking, onPay, onCancel }) {
             </div>
           )}
 
+          {booking.status === 'REFUNDED' && booking.refundReason && (
+            <div
+              style={{
+                padding: '12px 16px',
+                borderRadius: '14px',
+                background: '#ecfdf5',
+                border: '1px solid #bbf7d0',
+                color: '#166534',
+                fontSize: '0.85rem'
+              }}
+            >
+              <strong>Lý do hoàn tiền:</strong> {booking.refundReason}
+            </div>
+          )}
+
           {/* CANCEL REASON IF CANCELLED */}
           {booking.status === 'CANCELLED' && booking.cancelReason && (
             <div
@@ -221,6 +238,30 @@ export function BookingCard({ booking, onPay, onCancel }) {
                 }}
               >
                 ❌ Hủy giữ chỗ
+              </button>
+            </div>
+          )}
+
+          {booking.status === 'SOLD' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+              <button
+                type="button"
+                onClick={() => onRefund?.(booking.id)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #059669, #047857)',
+                  color: '#ffffff',
+                  fontSize: '0.88rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                  transition: 'transform 0.15s ease'
+                }}
+              >
+                💸 Yêu cầu hoàn vé
               </button>
             </div>
           )}

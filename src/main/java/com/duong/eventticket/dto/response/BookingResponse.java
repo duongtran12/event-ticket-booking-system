@@ -28,6 +28,7 @@ public class BookingResponse {
     private BigDecimal totalPrice;
     private String status;
     private String cancelReason;
+    private String refundReason;
     private String qrCodeValue;
     private String qrCodeImage;
     private Boolean checkedIn;

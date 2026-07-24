@@ -220,6 +220,47 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
+    public BookingResponse refundBooking(String userEmail, Long bookingId, String reason) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        if (!booking.getUser().getEmail().equals(userEmail)) {
+            throw new AccessDeniedException("You do not have permission to refund this booking");
+        }
+
+        if (booking.getStatus() != BookingStatus.SOLD) {
+            throw new IllegalArgumentException("Only SOLD bookings can be refunded. Current status: " + booking.getStatus());
+        }
+
+        Event event = eventRepository.findByIdWithLock(booking.getEvent().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        if (event.getDateTime().isBefore(LocalDateTime.now().plusDays(1))) {
+            throw new IllegalArgumentException("Hoàn vé chỉ áp dụng trước 1 ngày so với thời gian diễn ra sự kiện.");
+        }
+
+        if (booking.getTicketType() != null && booking.getTicketType().getId() != null) {
+            ticketTypeRepository.findByIdWithLock(booking.getTicketType().getId())
+                    .ifPresent(ticketType -> {
+                        ticketType.setAvailableTickets(ticketType.getAvailableTickets() + booking.getQuantity());
+                        ticketTypeRepository.save(ticketType);
+                    });
+        }
+
+        event.setAvailableTickets(event.getAvailableTickets() + booking.getQuantity());
+        eventRepository.save(event);
+
+        booking.setStatus(BookingStatus.REFUNDED);
+        booking.setRefundReason(reason);
+        booking.setCancelReason(reason);
+        Booking refundedBooking = bookingRepository.save(booking);
+
+        emailService.sendRefundEmail(refundedBooking);
+        return mapToResponse(refundedBooking);
+    }
+
+    @Override
+    @Transactional
     public String createPaymentUrl(String userEmail, Long bookingId, String clientIp) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
@@ -481,6 +522,7 @@ public class BookingServiceImpl implements BookingService {
         response.setCreatedAt(booking.getCreatedAt());
         response.setUpdatedAt(booking.getUpdatedAt());
         response.setCancelReason(booking.getCancelReason());
+        response.setRefundReason(booking.getRefundReason());
         response.setQrCodeValue(booking.getQrCodeValue());
         if (booking.getQrCodeValue() != null && !booking.getQrCodeValue().isBlank()) {
             String dataUri = generateQrBase64(booking.getQrCodeValue());

@@ -47,6 +47,9 @@ public class Booking {
     private String cancelReason;
 
     @Column(length = 500)
+    private String refundReason;
+
+    @Column(length = 500)
     private String qrCodeValue;
 
     @Column(nullable = false)

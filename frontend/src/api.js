@@ -173,6 +173,19 @@ export async function cancelBooking(token, bookingId, reason) {
   return handleResponse(response);
 }
 
+export async function refundBooking(token, bookingId, reason) {
+  const response = await fetch(`${API_BASE}/bookings/${bookingId}/refund`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ reason }),
+  });
+
+  return handleResponse(response);
+}
+
 export async function getAdminStats(token) {
   const response = await fetch(`${API_BASE}/admin/stats`, {
     headers: {

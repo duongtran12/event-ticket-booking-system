@@ -81,6 +81,21 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}/refund")
+    @Operation(summary = "Refund a paid booking")
+    public ResponseEntity<BookingResponse> refundBooking(
+            @PathVariable Long id,
+            Authentication authentication,
+            @RequestBody(required = false) CancelBookingRequest request
+    ) {
+        String userEmail = authentication.getName();
+        String reason = request != null && request.getReason() != null && !request.getReason().isBlank()
+                ? request.getReason().trim()
+                : "Yêu cầu hoàn vé";
+        BookingResponse response = bookingService.refundBooking(userEmail, id, reason);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{id}/pay")
     @Operation(summary = "Create a VNPay payment URL")
     public ResponseEntity<Map<String, String>> createPaymentUrl(
