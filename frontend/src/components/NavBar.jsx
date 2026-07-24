@@ -56,22 +56,16 @@ export function NavBar({
                 width: '42px',
                 height: '42px',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
+                overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#ffffff',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
+                background: '#ffffff',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)'
               }}
             >
-              {/* Ticket Icon SVG */}
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="6" width="20" height="12" rx="2" />
-                <path d="M6 12h.01M18 12h.01" />
-                <path d="M10 6v12" strokeDasharray="2 2" />
-              </svg>
+              <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '18px', fontWeight: '800', color: '#ffffff', letterSpacing: '-0.02em', lineHeight: '1.2' }}>
                 TICKETBOX
