@@ -2,8 +2,10 @@ package com.duong.eventticket.service.impl;
 
 import com.duong.eventticket.dto.request.EventRequest;
 import com.duong.eventticket.dto.response.EventResponse;
+import com.duong.eventticket.entity.BookingStatus;
 import com.duong.eventticket.entity.Event;
 import com.duong.eventticket.exception.custom.ResourceNotFoundException;
+import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +28,9 @@ class EventServiceImplTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private BookingRepository bookingRepository;
 
     @InjectMocks
     private EventServiceImpl eventService;
@@ -65,6 +70,59 @@ class EventServiceImplTest {
         assertEquals(120, response.getTotalTickets());
         assertEquals(90, response.getAvailableTickets());
         assertEquals("New Title", response.getTitle());
+    }
+
+    @Test
+    void updateEventShouldThrowWhenEventAlreadyStarted() {
+        Event existingEvent = new Event();
+        existingEvent.setId(1L);
+        existingEvent.setTitle("Old Title");
+        existingEvent.setDescription("Old description");
+        existingEvent.setLocation("Old location");
+        existingEvent.setDateTime(LocalDateTime.now().minusHours(1));
+        existingEvent.setPrice(BigDecimal.valueOf(100000));
+        existingEvent.setTotalTickets(100);
+        existingEvent.setAvailableTickets(100);
+
+        EventRequest request = buildEventRequest("New Title", 120);
+
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
+
+        assertThrows(IllegalArgumentException.class, () -> eventService.updateEvent(1L, request));
+    }
+
+    @Test
+    void updateEventShouldThrowWhenEventHasActiveBookings() {
+        Event existingEvent = new Event();
+        existingEvent.setId(1L);
+        existingEvent.setTitle("Old Title");
+        existingEvent.setDescription("Old description");
+        existingEvent.setLocation("Old location");
+        existingEvent.setDateTime(LocalDateTime.now().plusDays(1));
+        existingEvent.setPrice(BigDecimal.valueOf(100000));
+        existingEvent.setTotalTickets(100);
+        existingEvent.setAvailableTickets(70);
+
+        EventRequest request = buildEventRequest("New Title", 120);
+
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
+        when(bookingRepository.existsByEventIdAndStatusIn(1L, List.of(BookingStatus.RESERVED, BookingStatus.SOLD)))
+                .thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class, () -> eventService.updateEvent(1L, request));
+    }
+
+    @Test
+    void deleteEventShouldThrowWhenEventHasActiveBookings() {
+        Event existingEvent = new Event();
+        existingEvent.setId(1L);
+        existingEvent.setDateTime(LocalDateTime.now().plusDays(1));
+
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
+        when(bookingRepository.existsByEventIdAndStatusIn(1L, List.of(BookingStatus.RESERVED, BookingStatus.SOLD)))
+                .thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class, () -> eventService.deleteEvent(1L));
     }
 
     @Test

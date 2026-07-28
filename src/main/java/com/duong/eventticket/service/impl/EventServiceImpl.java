@@ -1,12 +1,13 @@
 package com.duong.eventticket.service.impl;
 
 import com.duong.eventticket.dto.request.EventRequest;
-import com.duong.eventticket.dto.request.TicketTypeRequest;
 import com.duong.eventticket.dto.response.EventResponse;
 import com.duong.eventticket.dto.response.TicketTypeResponse;
+import com.duong.eventticket.entity.BookingStatus;
 import com.duong.eventticket.entity.Event;
 import com.duong.eventticket.entity.TicketType;
 import com.duong.eventticket.exception.custom.ResourceNotFoundException;
+import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
 import com.duong.eventticket.service.EventService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
     @Transactional
@@ -74,6 +77,8 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
 
+        validateEventCanBeModified(event, "update");
+
         int soldTickets = getSoldTickets(event);
         int newTotalTickets = request.getTicketTypes().stream().mapToInt(ticketTypeRequest -> ticketTypeRequest.getTotalTickets()).sum();
         int newAvailableTickets = calculateAvailableTickets(event, newTotalTickets);
@@ -111,10 +116,30 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public void deleteEvent(Long id) {
-        if (!eventRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Event not found with id: " + id);
-        }
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+
+        validateEventCanBeModified(event, "delete");
         eventRepository.deleteById(id);
+    }
+
+    private void validateEventCanBeModified(Event event, String action) {
+        LocalDateTime now = LocalDateTime.now();
+        if (!event.getDateTime().isAfter(now)) {
+            throw new IllegalArgumentException(
+                    "Cannot " + action + " an event that has already started or already passed."
+            );
+        }
+
+        boolean hasActiveBookings = bookingRepository.existsByEventIdAndStatusIn(
+                event.getId(),
+                List.of(BookingStatus.RESERVED, BookingStatus.SOLD)
+        );
+        if (hasActiveBookings) {
+            throw new IllegalArgumentException(
+                    "Cannot " + action + " an event that already has active bookings."
+            );
+        }
     }
 
     private void applyRequest(Event event, EventRequest request) {

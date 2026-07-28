@@ -96,6 +96,22 @@ function App() {
   }, [page, sort]);
 
   useEffect(() => {
+    const updatedSelections = { ...selectedTicketTypes };
+    let hasChanges = false;
+
+    events.forEach((event) => {
+      if (event.ticketTypes?.length === 1 && !updatedSelections[event.id]) {
+        updatedSelections[event.id] = event.ticketTypes[0].id;
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      setSelectedTicketTypes(updatedSelections);
+    }
+  }, [events]);
+
+  useEffect(() => {
     if (activePage === PAGES.BOOKINGS && isAuthenticated) {
       fetchBookings();
     }
@@ -377,7 +393,12 @@ function App() {
     setError(null);
     setMessage(null);
 
-    if (!ticketTypeId) {
+    if (quantity <= 0) {
+      setError('Số lượng vé phải lớn hơn 0.');
+      return;
+    }
+
+    if (!ticketTypeId || ticketTypeId <= 0) {
       setError('Vui lòng chọn loại vé trước khi đặt.');
       return;
     }
@@ -1677,6 +1698,68 @@ function App() {
           </section>
         )}
         <ChatBox open={chatOpen} messages={chatMessages} onClose={handleCloseChat} onSend={handleSendChat} />
+
+        <footer
+          style={{
+            marginTop: '32px',
+            padding: '40px 20px',
+            background: '#0f172a',
+            color: '#cbd5e1',
+            borderTop: '1px solid #1e293b'
+          }}
+        >
+          <div style={{ maxWidth: '1360px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '32px', alignItems: 'start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '16px', overflow: 'hidden', background: '#ffffff', display: 'grid', placeItems: 'center' }}>
+                  <img src="/logo.png" alt="TicketBox Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, color: '#ffffff', fontSize: '18px' }}>TicketBox</h3>
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>Giải pháp đặt vé sự kiện thông minh và an toàn.</p>
+                </div>
+              </div>
+              <p style={{ margin: 0, lineHeight: 1.8, color: '#cbd5e1', fontSize: '14px' }}>
+                Giúp bạn tổ chức, bán vé và quản lý check-in nhanh chóng cho mọi loại sự kiện từ âm nhạc, hội thảo đến thể thao.
+              </p>
+            </div>
+
+            <div>
+              <h4 style={{ marginBottom: '14px', color: '#ffffff', fontSize: '16px' }}>Liên hệ</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '10px', color: '#cbd5e1' }}>
+                <li>📧 Email: <a href="mailto:support@ticketbox.local" style={{ color: '#60a5fa', textDecoration: 'none' }}>support@ticketbox.local</a></li>
+                <li>📞 Hotline: <a href="tel:0909123456" style={{ color: '#60a5fa', textDecoration: 'none' }}>0909 123 456</a></li>
+                <li>🏢 Trụ sở: 123 Đường Sự Kiện, Quận 1, TP.HCM</li>
+                <li>🕒 Giờ làm việc: 08:00 - 18:00 (T2 - T6)</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 style={{ marginBottom: '14px', color: '#ffffff', fontSize: '16px' }}>Điều hướng nhanh</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '10px' }}>
+                <li><button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ border: 'none', background: 'none', color: '#60a5fa', cursor: 'pointer', padding: 0 }}>Trang chủ</button></li>
+                <li><button type="button" onClick={() => window.location.href = '/#/bookings'} style={{ border: 'none', background: 'none', color: '#60a5fa', cursor: 'pointer', padding: 0 }}>Vé của tôi</button></li>
+                <li><button type="button" onClick={() => window.location.href = '/#/profile'} style={{ border: 'none', background: 'none', color: '#60a5fa', cursor: 'pointer', padding: 0 }}>Hồ sơ</button></li>
+                <li><button type="button" onClick={() => window.location.href = '/#/login'} style={{ border: 'none', background: 'none', color: '#60a5fa', cursor: 'pointer', padding: 0 }}>Đăng nhập</button></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 style={{ marginBottom: '14px', color: '#ffffff', fontSize: '16px' }}>Thông tin</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '10px', color: '#cbd5e1' }}>
+                <li>📌 Chính sách hoàn vé</li>
+                <li>📌 Điều khoản sử dụng</li>
+                <li>📌 Bảo mật thông tin</li>
+                <li>📌 Hỗ trợ tổ chức sự kiện</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '32px', borderTop: '1px solid #1e293b', paddingTop: '22px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '16px', color: '#94a3b8', fontSize: '13px' }}>
+            <span>© 2026 TicketBox. All rights reserved.</span>
+            <span>Pháp lý | Chính sách bảo mật | Liên hệ hỗ trợ</span>
+          </div>
+        </footer>
       </main>
     </div>
   );

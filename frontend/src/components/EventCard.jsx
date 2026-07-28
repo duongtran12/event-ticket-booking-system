@@ -260,26 +260,35 @@ export function EventCard({ event, quantity, onQuantityChange, onBook, selectedT
 
           <button
             type="button"
-            onClick={() => canBook && onBook(event.id, selectedTicketTypeId)}
-            disabled={!canBook}
+            onClick={() => onBook(event.id, selectedTicketTypeId)}
+            disabled={!canBook || !selectedTicketTypeId}
+            title={
+              !canBook
+                ? event.availableTickets <= 0
+                  ? 'Sự kiện đã hết vé'
+                  : 'Đặt vé bị đóng do quá gần giờ diễn'
+                : !selectedTicketTypeId
+                  ? 'Vui lòng chọn loại vé'
+                  : 'Đặt vé ngay'
+            }
             style={{
               flex: 1,
               height: '42px',
-              backgroundColor: canBook ? '#2563eb' : '#cbd5e1',
+              backgroundColor: !canBook || !selectedTicketTypeId ? '#cbd5e1' : '#2563eb',
               color: '#ffffff',
               border: 'none',
               borderRadius: '10px',
               fontSize: '13.5px',
               fontWeight: '700',
-              cursor: canBook ? 'pointer' : 'not-allowed',
+              cursor: !canBook || !selectedTicketTypeId ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
-              boxShadow: canBook ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
+              boxShadow: !canBook || !selectedTicketTypeId ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.25)'
             }}
             onMouseOver={(e) => {
-              if (canBook) e.currentTarget.style.backgroundColor = '#1d4ed8';
+              if (canBook && selectedTicketTypeId) e.currentTarget.style.backgroundColor = '#1d4ed8';
             }}
             onMouseOut={(e) => {
-              if (canBook) e.currentTarget.style.backgroundColor = '#2563eb';
+              if (canBook && selectedTicketTypeId) e.currentTarget.style.backgroundColor = '#2563eb';
             }}
           >
             {event.availableTickets <= 0 ? 'Hết vé' : isClosed ? 'Đóng vé' : 'Đặt vé ngay'}

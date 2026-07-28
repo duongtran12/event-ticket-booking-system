@@ -34,4 +34,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<String> findTopEventTitleByStatus(@Param("status") BookingStatus status, Pageable pageable);
 
     List<Booking> findByStatusAndQrCodeValueIsNull(BookingStatus status);
+
+    boolean existsByEventIdAndStatusIn(Long eventId, List<BookingStatus> statuses);
 }
