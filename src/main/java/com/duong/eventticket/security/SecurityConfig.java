@@ -1,7 +1,10 @@
 package com.duong.eventticket.security;
 
 import com.duong.eventticket.security.jwt.JwtAuthenticationFilter;
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,6 +26,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -34,6 +38,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
+    @Value("${app.allowed-origins}")
+    private String allowedOrigins;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -41,8 +48,11 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
+        DaoAuthenticationProvider authProvider =
+                new DaoAuthenticationProvider(userDetailsService);
+
         authProvider.setPasswordEncoder(passwordEncoder());
+
         return authProvider;
     }
 
@@ -54,42 +64,116 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
                 )
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(
+                                new HttpStatusEntryPoint(
+                                        HttpStatus.UNAUTHORIZED
+                                )
+                        )
+                )
+
                 .authenticationProvider(authenticationProvider())
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/chat").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/payment-callback").permitAll()
+                        .requestMatchers("/api/auth/**")
+                        .permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/events/**"
+                        )
+                        .permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/api/**"
+                        )
+                        .permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/chat"
+                        )
+                        .permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/bookings/payment-callback"
+                        )
+                        .permitAll()
+
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+                        )
+                        .permitAll()
+
+                        .anyRequest()
+                        .authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        CorsConfiguration configuration =
+                new CorsConfiguration();
+
+        List<String> origins =
+                Arrays.stream(allowedOrigins.split(","))
+                        .map(String::trim)
+                        .filter(origin -> !origin.isBlank())
+                        .toList();
+
+        configuration.setAllowedOrigins(origins);
+
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "OPTIONS"
+                )
+        );
+
+        configuration.setAllowedHeaders(
+                List.of("*")
+        );
+
         configuration.setAllowCredentials(false);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/api/**",
+                configuration
+        );
+
         return source;
     }
 }

@@ -49,3 +49,14 @@ application-secrets.yml
 application-local.yml
 .env
 frontend/.env
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Editor and backup files
+*.backup
+*.save
+*.save.*
+*~

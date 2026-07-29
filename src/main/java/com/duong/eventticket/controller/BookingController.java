@@ -5,8 +5,15 @@ import com.duong.eventticket.dto.request.CancelBookingRequest;
 import com.duong.eventticket.dto.response.BookingResponse;
 import com.duong.eventticket.dto.response.CheckInResponse;
 import com.duong.eventticket.service.BookingService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,18 +25,22 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URI;
 import java.util.Map;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
-@Tag(name = "Bookings", description = "APIs for booking tickets and managing booking history")
+@Tag(
+        name = "Bookings",
+        description = "APIs for booking tickets and managing booking history"
+)
 public class BookingController {
 
     private final BookingService bookingService;
+
+    @Value("${app.frontend-url}")
+    private String frontendBaseUrl;
 
     @PostMapping
     @Operation(summary = "Create a booking")
@@ -39,7 +50,10 @@ public class BookingController {
     ) {
         String userEmail = authentication.getName();
         BookingResponse response = bookingService.createBooking(userEmail, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping("/my-bookings")
@@ -50,8 +64,16 @@ public class BookingController {
             @RequestParam(value = "size", defaultValue = "10") int size
     ) {
         String userEmail = authentication.getName();
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<BookingResponse> response = bookingService.getMyBookings(userEmail, pageable);
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<BookingResponse> response =
+                bookingService.getMyBookings(userEmail, pageable);
+
         return ResponseEntity.ok(response);
     }
 
@@ -62,7 +84,10 @@ public class BookingController {
             Authentication authentication
     ) {
         String userEmail = authentication.getName();
-        BookingResponse response = bookingService.getBookingById(userEmail, id);
+
+        BookingResponse response =
+                bookingService.getBookingById(userEmail, id);
+
         return ResponseEntity.ok(response);
     }
 
@@ -74,10 +99,17 @@ public class BookingController {
             @RequestBody(required = false) CancelBookingRequest request
     ) {
         String userEmail = authentication.getName();
-        String reason = request != null && request.getReason() != null && !request.getReason().isBlank()
-                ? request.getReason().trim()
-                : "Hủy bởi người dùng";
-        BookingResponse response = bookingService.cancelBooking(userEmail, id, reason);
+
+        String reason =
+                request != null
+                        && request.getReason() != null
+                        && !request.getReason().isBlank()
+                        ? request.getReason().trim()
+                        : "Hủy bởi người dùng";
+
+        BookingResponse response =
+                bookingService.cancelBooking(userEmail, id, reason);
+
         return ResponseEntity.ok(response);
     }
 
@@ -89,10 +121,17 @@ public class BookingController {
             @RequestBody(required = false) CancelBookingRequest request
     ) {
         String userEmail = authentication.getName();
-        String reason = request != null && request.getReason() != null && !request.getReason().isBlank()
-                ? request.getReason().trim()
-                : "Yêu cầu hoàn vé";
-        BookingResponse response = bookingService.refundBooking(userEmail, id, reason);
+
+        String reason =
+                request != null
+                        && request.getReason() != null
+                        && !request.getReason().isBlank()
+                        ? request.getReason().trim()
+                        : "Yêu cầu hoàn vé";
+
+        BookingResponse response =
+                bookingService.refundBooking(userEmail, id, reason);
+
         return ResponseEntity.ok(response);
     }
 
@@ -101,13 +140,31 @@ public class BookingController {
     public ResponseEntity<Map<String, String>> createPaymentUrl(
             @PathVariable Long id,
             Authentication authentication,
-            @RequestHeader(value = "X-Forwarded-For", required = false) String forwardedIp,
-            @RequestParam(value = "clientIp", required = false) String clientIp
+            @RequestHeader(
+                    value = "X-Forwarded-For",
+                    required = false
+            ) String forwardedIp,
+            @RequestParam(
+                    value = "clientIp",
+                    required = false
+            ) String clientIp
     ) {
         String userEmail = authentication.getName();
-        String ip = clientIp != null && !clientIp.isBlank() ? clientIp : forwardedIp;
-        String paymentUrl = bookingService.createPaymentUrl(userEmail, id, ip != null ? ip : "127.0.0.1");
-        return ResponseEntity.ok(Map.of("paymentUrl", paymentUrl));
+
+        String ip =
+                clientIp != null && !clientIp.isBlank()
+                        ? clientIp
+                        : forwardedIp;
+
+        String paymentUrl = bookingService.createPaymentUrl(
+                userEmail,
+                id,
+                ip != null ? ip : "127.0.0.1"
+        );
+
+        return ResponseEntity.ok(
+                Map.of("paymentUrl", paymentUrl)
+        );
     }
 
     @PostMapping("/{id}/complete")
@@ -117,43 +174,96 @@ public class BookingController {
             Authentication authentication
     ) {
         String userEmail = authentication.getName();
-        BookingResponse response = bookingService.completePayment(userEmail, id);
+
+        BookingResponse response =
+                bookingService.completePayment(userEmail, id);
+
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/payment-callback")
     @Operation(summary = "Handle payment callback")
-    public ResponseEntity<Void> handlePaymentCallback(@RequestParam Map<String, String> params) {
+    public ResponseEntity<Void> handlePaymentCallback(
+            @RequestParam Map<String, String> params
+    ) {
         String bookingId = params.get("bookingId");
         String responseCode = params.get("vnp_ResponseCode");
+
         if (bookingId == null || responseCode == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        boolean success = bookingService.handlePaymentCallback(params);
-        String result = success ? "success" : "failed";
-        String frontendUrl = "http://localhost:3000/?bookingId=" + bookingId
-                + "&vnp_ResponseCode=" + responseCode
-                + "&paymentResult=" + result;
+        boolean success =
+                bookingService.handlePaymentCallback(params);
 
-        return ResponseEntity.status(302).location(java.net.URI.create(frontendUrl)).build();
+        String result = success ? "success" : "failed";
+
+        String frontendUrl =
+                normalizeFrontendUrl(frontendBaseUrl)
+                        + "/?bookingId=" + bookingId
+                        + "&vnp_ResponseCode=" + responseCode
+                        + "&paymentResult=" + result;
+
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .location(URI.create(frontendUrl))
+                .build();
     }
 
     @PostMapping("/check-in")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Check in a booking from a QR image uploaded by admin")
+    @Operation(
+            summary = "Check in a booking from a QR image uploaded by admin"
+    )
     public ResponseEntity<CheckInResponse> checkInBooking(
             @RequestParam("file") MultipartFile file,
             Authentication authentication
     ) {
         if (file == null || file.isEmpty()) {
-            return ResponseEntity.badRequest().body(CheckInResponse.failure("Vui lòng chọn ảnh chứa mã QR"));
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            CheckInResponse.failure(
+                                    "Vui lòng chọn ảnh chứa mã QR"
+                            )
+                    );
         }
+
         try {
-            CheckInResponse response = bookingService.checkInBooking(authentication.getName(), file.getBytes());
+            CheckInResponse response =
+                    bookingService.checkInBooking(
+                            authentication.getName(),
+                            file.getBytes()
+                    );
+
             return ResponseEntity.ok(response);
         } catch (Exception ex) {
-            return ResponseEntity.badRequest().body(CheckInResponse.failure("Không thể xử lý ảnh QR: " + ex.getMessage()));
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            CheckInResponse.failure(
+                                    "Không thể xử lý ảnh QR: "
+                                            + ex.getMessage()
+                            )
+                    );
         }
+    }
+
+    private String normalizeFrontendUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return "http://localhost:5173";
+        }
+
+        String normalizedUrl = url.trim();
+
+        while (normalizedUrl.endsWith("/")) {
+            normalizedUrl =
+                    normalizedUrl.substring(
+                            0,
+                            normalizedUrl.length() - 1
+                    );
+        }
+
+        return normalizedUrl;
     }
 }

@@ -2,31 +2,78 @@ services:
   mysql:
     image: mysql:8.0
     container_name: eventticket-mysql
+    restart: unless-stopped
 
     environment:
-      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: event_ticket_db
-
-    ports:
-      - "3307:3306"
 
     volumes:
       - mysql_data:/var/lib/mysql
+
+    command:
+      - --innodb-buffer-pool-size=128M
+      - --max-connections=30
+      - --performance-schema=OFF
+      - --table-open-cache=200
+      - --thread-cache-size=8
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+    mem_limit: 350m
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
+
     container_name: eventticket-app
+    restart: unless-stopped
+
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/event_ticket_db
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/event_ticket_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 123456
-      JWT_SECRET: mySecretKeyMySecretKeyMySecretKey123456NeedToBeAtLeast32BytesLong
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:MaxMetaspaceSize=160m -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError"
+
     ports:
-      - "8080:8080"
+      - "8080:8081"
+
+    mem_limit: 600m
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    container_name: eventticket-frontend
+    restart: unless-stopped
+
+    depends_on:
+      - app
+
+    ports:
+      - "80:80"
+
+    mem_limit: 64m
 
 volumes:
   mysql_data:
