@@ -10,11 +10,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,15 +55,20 @@ public class EventController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all events with pagination and search")
+    @Operation(summary = "Get all events with pagination and extended search")
     public ResponseEntity<Page<EventResponse>> getAllEvents(
             @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "dateFrom", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateFrom,
+            @RequestParam(value = "dateTo", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTo,
+            @RequestParam(value = "priceFrom", required = false) BigDecimal priceFrom,
+            @RequestParam(value = "priceTo", required = false) BigDecimal priceTo,
+            @RequestParam(value = "minAvailableTickets", required = false) Integer minAvailableTickets,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sort", defaultValue = "dateTime,asc") String sort
     ) {
         Pageable pageable = PageRequest.of(page, size, parseSort(sort));
-        Page<EventResponse> response = eventService.getAllEvents(keyword, pageable);
+        Page<EventResponse> response = eventService.getAllEvents(keyword, dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets, pageable);
         return ResponseEntity.ok(response);
     }
 

@@ -27,6 +27,12 @@ function App() {
   const [totalEventsCount, setTotalEventsCount] = useState(0);
   const [keyword, setKeyword] = useState('');
   const [sort, setSort] = useState('dateTime,asc');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [priceFrom, setPriceFrom] = useState('');
+  const [priceTo, setPriceTo] = useState('');
+  const [minAvailableTickets, setMinAvailableTickets] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const eventCountLabel = events.length > 0 ? `${events.length.toLocaleString('vi-VN')} sự kiện` : 'Không có sự kiện';
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -93,7 +99,7 @@ function App() {
 
   useEffect(() => {
     fetchEvents();
-  }, [page, sort]);
+  }, [page, sort, keyword, dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets]);
 
   useEffect(() => {
     const updatedSelections = { ...selectedTicketTypes };
@@ -138,7 +144,7 @@ function App() {
     setMessage(null);
 
     try {
-      const data = await getEvents({ page, size: 12, sort, keyword });
+      const data = await getEvents({ page, size: 12, sort, keyword, dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets });
       setEvents(data.content || []);
       setTotalPages(data.totalPages || 0);
       setTotalEventsCount(data.totalElements || 0);
@@ -639,7 +645,7 @@ function App() {
   const handleSearch = async (event) => {
     event.preventDefault();
     setPage(0);
-    await fetchEvents();
+    // useEffect sẽ tự động gọi fetchEvents với page=0 và keyword mới nhất
   };
 
   const handleCheckIn = async (event) => {
@@ -849,6 +855,194 @@ function App() {
               {/* BACKGROUND DECORATIVE ACCENTS */}
               <div style={{ position: 'absolute', top: '-80px', left: '-80px', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(37, 99, 235, 0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', bottom: '-80px', right: '-80px', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            </div>
+
+            {/* EXPANDABLE FILTERS SECTION */}
+            <div
+              style={{
+                marginBottom: '20px',
+                background: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                overflow: 'hidden'
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setShowFilters(!showFilters)}
+                style={{
+                  width: '100%',
+                  padding: '14px 20px',
+                  background: 'none',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#0f172a'
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <line x1="4" y1="12" x2="14" y2="12" />
+                    <line x1="4" y1="18" x2="8" y2="18" />
+                  </svg>
+                  Bộ lọc nâng cao
+                </span>
+                <svg
+                  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5"
+                  style={{ transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {showFilters && (
+                <div
+                  style={{
+                    padding: '0 20px 20px 20px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '16px',
+                    borderTop: '1px solid #f1f5f9',
+                    paddingTop: '20px'
+                  }}
+                >
+                  {/* Date From */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12.5px', fontWeight: '600', color: '#475569' }}>Từ ngày</label>
+                    <input
+                      type="datetime-local"
+                      value={dateFrom}
+                      onChange={(e) => { setDateFrom(e.target.value); setPage(0); }}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        outline: 'none',
+                        color: '#0f172a',
+                        background: '#ffffff'
+                      }}
+                    />
+                  </div>
+
+                  {/* Date To */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12.5px', fontWeight: '600', color: '#475569' }}>Đến ngày</label>
+                    <input
+                      type="datetime-local"
+                      value={dateTo}
+                      onChange={(e) => { setDateTo(e.target.value); setPage(0); }}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        outline: 'none',
+                        color: '#0f172a',
+                        background: '#ffffff'
+                      }}
+                    />
+                  </div>
+
+                  {/* Price From */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12.5px', fontWeight: '600', color: '#475569' }}>Giá từ (₫)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={priceFrom}
+                      onChange={(e) => { setPriceFrom(e.target.value); setPage(0); }}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        outline: 'none',
+                        color: '#0f172a',
+                        background: '#ffffff'
+                      }}
+                    />
+                  </div>
+
+                  {/* Price To */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12.5px', fontWeight: '600', color: '#475569' }}>Giá đến (₫)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="999999999"
+                      value={priceTo}
+                      onChange={(e) => { setPriceTo(e.target.value); setPage(0); }}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        outline: 'none',
+                        color: '#0f172a',
+                        background: '#ffffff'
+                      }}
+                    />
+                  </div>
+
+                  {/* Min Available Tickets */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12.5px', fontWeight: '600', color: '#475569' }}>Số vé còn lại tối thiểu</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={minAvailableTickets}
+                      onChange={(e) => { setMinAvailableTickets(e.target.value); setPage(0); }}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        outline: 'none',
+                        color: '#0f172a',
+                        background: '#ffffff'
+                      }}
+                    />
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDateFrom('');
+                        setDateTo('');
+                        setPriceFrom('');
+                        setPriceTo('');
+                        setMinAvailableTickets('');
+                        setPage(0);
+                      }}
+                      style={{
+                        padding: '9px 16px',
+                        borderRadius: '10px',
+                        border: '1px solid #e2e8f0',
+                        background: '#f8fafc',
+                        color: '#64748b',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseOver={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#ef4444'; }}
+                      onMouseOut={(e) => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#64748b'; }}
+                    >
+                      Xóa bộ lọc
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* BAR FILTER CATEGORY & SORT */}

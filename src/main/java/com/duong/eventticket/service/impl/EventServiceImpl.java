@@ -66,8 +66,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<EventResponse> getAllEvents(String keyword, Pageable pageable) {
-        Page<Event> eventPage = eventRepository.searchEvents(keyword, pageable);
+    public Page<EventResponse> getAllEvents(String keyword, LocalDateTime dateFrom, LocalDateTime dateTo, BigDecimal priceFrom, BigDecimal priceTo, Integer minAvailableTickets, Pageable pageable) {
+        Page<Event> eventPage = eventRepository.searchEvents(keyword, dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets, pageable);
         return eventPage.map(this::mapToResponse);
     }
 

@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,12 +33,12 @@ class EventControllerTest {
     @Test
     void getAllEventsShouldFallbackToDateTimeSortWhenSortFieldIsInvalid() {
         EventResponse response = buildEventResponse();
-        when(eventService.getAllEvents(any(), any())).thenReturn(new PageImpl<>(List.of(response)));
+        when(eventService.getAllEvents(any(), any(), any(), any(), any(), any(), any())).thenReturn(new PageImpl<>(List.of(response)));
 
-        eventController.getAllEvents(null, 0, 10, "unknown,desc");
+        eventController.getAllEvents(null, null, null, null, null, null, 0, 10, "unknown,desc");
 
         ArgumentCaptor<org.springframework.data.domain.Pageable> pageableCaptor = ArgumentCaptor.forClass(org.springframework.data.domain.Pageable.class);
-        verify(eventService).getAllEvents(org.mockito.ArgumentMatchers.isNull(), pageableCaptor.capture());
+        verify(eventService).getAllEvents(any(), any(), any(), any(), any(), any(), pageableCaptor.capture());
 
         assertEquals(Sort.by(Sort.Direction.DESC, "dateTime"), pageableCaptor.getValue().getSort());
         assertEquals(PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "dateTime")), pageableCaptor.getValue());

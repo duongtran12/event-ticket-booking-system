@@ -446,7 +446,7 @@ public class OpenAIChatService {
         if (keyword == null || keyword.isBlank()) {
             return List.of();
         }
-        return eventRepository.searchEvents(keyword, PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "dateTime"))).getContent();
+        return eventRepository.searchEvents(keyword, null, null, null, null, null, PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "dateTime"))).getContent();
     }
 
     private String extractEventTitle(String userMessage) {

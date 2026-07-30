@@ -21,8 +21,21 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("SELECT e FROM Event e WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR " +
            "LOWER(e.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(e.location) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Event> searchEvents(@Param("keyword") String keyword, Pageable pageable);
+           "LOWER(e.location) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (:dateFrom IS NULL OR e.dateTime >= :dateFrom) " +
+           "AND (:dateTo IS NULL OR e.dateTime <= :dateTo) " +
+           "AND (:priceFrom IS NULL OR e.price >= :priceFrom) " +
+           "AND (:priceTo IS NULL OR e.price <= :priceTo) " +
+           "AND (:minAvailableTickets IS NULL OR e.availableTickets >= :minAvailableTickets)")
+    Page<Event> searchEvents(
+            @Param("keyword") String keyword,
+            @Param("dateFrom") LocalDateTime dateFrom,
+            @Param("dateTo") LocalDateTime dateTo,
+            @Param("priceFrom") BigDecimal priceFrom,
+            @Param("priceTo") BigDecimal priceTo,
+            @Param("minAvailableTickets") Integer minAvailableTickets,
+            Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Event e WHERE e.id = :id")

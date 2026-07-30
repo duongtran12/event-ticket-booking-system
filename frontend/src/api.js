@@ -15,7 +15,7 @@ async function handleResponse(response) {
   return body;
 }
 
-export async function getEvents({ page = 0, size = 12, sort = 'dateTime,asc', keyword = '' } = {}) {
+export async function getEvents({ page = 0, size = 12, sort = 'dateTime,asc', keyword = '', dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets } = {}) {
   const params = new URLSearchParams({
     page: page.toString(),
     size: size.toString(),
@@ -24,6 +24,30 @@ export async function getEvents({ page = 0, size = 12, sort = 'dateTime,asc', ke
 
   if (keyword.trim()) {
     params.set('keyword', keyword.trim());
+  }
+
+  if (dateFrom) {
+    // Append seconds if missing (datetime-local gives "YYYY-MM-DDTHH:MM" without seconds)
+    const formattedDate = dateFrom.includes('T') && dateFrom.length <= 16 ? dateFrom + ':00' : dateFrom;
+    params.set('dateFrom', formattedDate);
+  }
+
+  if (dateTo) {
+    // Append seconds if missing (datetime-local gives "YYYY-MM-DDTHH:MM" without seconds)
+    const formattedDate = dateTo.includes('T') && dateTo.length <= 16 ? dateTo + ':00' : dateTo;
+    params.set('dateTo', formattedDate);
+  }
+
+  if (priceFrom !== undefined && priceFrom !== null && priceFrom !== '') {
+    params.set('priceFrom', priceFrom.toString());
+  }
+
+  if (priceTo !== undefined && priceTo !== null && priceTo !== '') {
+    params.set('priceTo', priceTo.toString());
+  }
+
+  if (minAvailableTickets !== undefined && minAvailableTickets !== null && minAvailableTickets !== '') {
+    params.set('minAvailableTickets', minAvailableTickets.toString());
   }
 
   const response = await fetch(`${API_BASE}/events?${params.toString()}`);
