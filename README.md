@@ -171,6 +171,8 @@ On PowerShell, use `Copy-Item .env.example .env` instead. For local backend runs
 | `SPRING_DATASOURCE_PASSWORD` | MySQL password |
 | `FLYWAY_BASELINE_ON_MIGRATE` | Set `true` once when adopting Flyway for an existing database; use `false` afterwards |
 | `JWT_SECRET` | JWT signing key (min 32 bytes) |
+| `BOOTSTRAP_ADMIN_EMAIL` | Optional email used to create the first admin account |
+| `BOOTSTRAP_ADMIN_PASSWORD` | Optional initial admin password (minimum 12 characters) |
 | `VNPAY_TMN_CODE` | VNPay merchant code |
 | `VNPAY_HASH_SECRET` | VNPay secret key |
 | `VNPAY_RETURN_URL` | Payment callback URL |
@@ -292,13 +294,9 @@ On startup, the application initializes:
 | `USER` | Standard user — can browse events, make bookings |
 | `ADMIN` | Administrator — full access to all features |
 
-### Default Admin Account
-| Field | Value |
-|-------|-------|
-| Email | `admin@eventticket.com` |
-| Password | `admin123` |
+### Initial Admin Account
 
-> **Note:** Change the default admin password in production.
+The project does not contain a default admin credential. To create the first admin, set both `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` before the first startup. If that email already exists, its password and role are left unchanged. After the account has been created, remove both values from the runtime environment.
 
 ---
 
