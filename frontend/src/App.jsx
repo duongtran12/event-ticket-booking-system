@@ -33,6 +33,9 @@ function App() {
   const [priceFrom, setPriceFrom] = useState('');
   const [priceTo, setPriceTo] = useState('');
   const [minAvailableTickets, setMinAvailableTickets] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({
+    keyword: '', dateFrom: '', dateTo: '', priceFrom: '', priceTo: '', minAvailableTickets: ''
+  });
   const [showFilters, setShowFilters] = useState(false);
   const eventCountLabel = events.length > 0 ? `${events.length.toLocaleString('vi-VN')} sự kiện` : 'Không có sự kiện';
   const [loading, setLoading] = useState(false);
@@ -111,7 +114,7 @@ function App() {
 
   useEffect(() => {
     fetchEvents();
-  }, [page, sort, keyword, dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets]);
+  }, [page, sort, appliedFilters]);
 
   useEffect(() => {
     const updatedSelections = { ...selectedTicketTypes };
@@ -156,7 +159,7 @@ function App() {
     setMessage(null);
 
     try {
-      const data = await getEvents({ page, size: 12, sort, keyword, dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets });
+      const data = await getEvents({ page, size: 12, sort, ...appliedFilters });
       setEvents(data.content || []);
       setTotalPages(data.totalPages || 0);
       setTotalEventsCount(data.totalElements || 0);
@@ -637,7 +640,25 @@ function App() {
   const handleSearch = async (event) => {
     event.preventDefault();
     setPage(0);
-    // useEffect sẽ tự động gọi fetchEvents với page=0 và keyword mới nhất
+    setAppliedFilters({ keyword, dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets });
+  };
+
+  const handleApplyFilters = () => {
+    setPage(0);
+    setAppliedFilters({ keyword, dateFrom, dateTo, priceFrom, priceTo, minAvailableTickets });
+  };
+
+  const handleClearFilters = () => {
+    setDateFrom('');
+    setDateTo('');
+    setPriceFrom('');
+    setPriceTo('');
+    setMinAvailableTickets('');
+    setPage(0);
+    setAppliedFilters((current) => ({
+      ...current,
+      dateFrom: '', dateTo: '', priceFrom: '', priceTo: '', minAvailableTickets: ''
+    }));
   };
 
   const handleCheckIn = async (event) => {
@@ -909,7 +930,7 @@ function App() {
                     <input
                       type="datetime-local"
                       value={dateFrom}
-                      onChange={(e) => { setDateFrom(e.target.value); setPage(0); }}
+                      onChange={(e) => setDateFrom(e.target.value)}
                       style={{
                         padding: '9px 12px',
                         borderRadius: '10px',
@@ -928,7 +949,7 @@ function App() {
                     <input
                       type="datetime-local"
                       value={dateTo}
-                      onChange={(e) => { setDateTo(e.target.value); setPage(0); }}
+                      onChange={(e) => setDateTo(e.target.value)}
                       style={{
                         padding: '9px 12px',
                         borderRadius: '10px',
@@ -949,7 +970,7 @@ function App() {
                       min="0"
                       placeholder="0"
                       value={priceFrom}
-                      onChange={(e) => { setPriceFrom(e.target.value); setPage(0); }}
+                      onChange={(e) => setPriceFrom(e.target.value)}
                       style={{
                         padding: '9px 12px',
                         borderRadius: '10px',
@@ -970,7 +991,7 @@ function App() {
                       min="0"
                       placeholder="999999999"
                       value={priceTo}
-                      onChange={(e) => { setPriceTo(e.target.value); setPage(0); }}
+                      onChange={(e) => setPriceTo(e.target.value)}
                       style={{
                         padding: '9px 12px',
                         borderRadius: '10px',
@@ -991,7 +1012,7 @@ function App() {
                       min="0"
                       placeholder="0"
                       value={minAvailableTickets}
-                      onChange={(e) => { setMinAvailableTickets(e.target.value); setPage(0); }}
+                      onChange={(e) => setMinAvailableTickets(e.target.value)}
                       style={{
                         padding: '9px 12px',
                         borderRadius: '10px',
@@ -1004,18 +1025,28 @@ function App() {
                     />
                   </div>
 
-                  {/* Clear Filters Button */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'flex-end' }}>
+                  {/* Filter Actions */}
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', gridColumn: '1 / -1' }}>
                     <button
                       type="button"
-                      onClick={() => {
-                        setDateFrom('');
-                        setDateTo('');
-                        setPriceFrom('');
-                        setPriceTo('');
-                        setMinAvailableTickets('');
-                        setPage(0);
+                      onClick={handleApplyFilters}
+                      style={{
+                        padding: '11px 22px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                        color: '#ffffff',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        boxShadow: '0 5px 14px rgba(37, 99, 235, 0.22)'
                       }}
+                    >
+                      Áp dụng bộ lọc
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearFilters}
                       style={{
                         padding: '9px 16px',
                         borderRadius: '10px',
