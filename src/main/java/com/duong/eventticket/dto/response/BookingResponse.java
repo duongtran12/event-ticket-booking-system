@@ -35,5 +35,6 @@ public class BookingResponse {
     private LocalDateTime checkedInAt;
     private String checkedInBy;
     private LocalDateTime createdAt;
+    private LocalDateTime expiresAt;
     private LocalDateTime updatedAt;
 }

@@ -52,6 +52,12 @@ public class Booking {
     @Column(length = 500)
     private String qrCodeValue;
 
+    @Column
+    private LocalDateTime expiresAt;
+
+    @Version
+    private Long version;
+
     @Column(nullable = false)
     private boolean checkedIn = false;
 

@@ -45,6 +45,8 @@ import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
+    private static final long RESERVATION_MINUTES = 10;
+
     private final BookingRepository bookingRepository;
     private final EventRepository eventRepository;
     private final TicketTypeRepository ticketTypeRepository;
@@ -109,6 +111,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setQuantity(request.getQuantity());
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.RESERVED);
+        booking.setExpiresAt(LocalDateTime.now().plusMinutes(RESERVATION_MINUTES));
 
         Booking savedBooking = bookingRepository.save(booking);
 
@@ -158,10 +161,27 @@ public class BookingServiceImpl implements BookingService {
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void releaseExpiredReservations() {
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(10);
-        List<Booking> expiredBookings = bookingRepository.findByStatusAndCreatedAtBefore(BookingStatus.RESERVED, cutoff);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime legacyCutoff = now.minusMinutes(RESERVATION_MINUTES);
+        List<Long> expiredBookingIds = bookingRepository.findExpiredReservationIds(
+                BookingStatus.RESERVED,
+                now,
+                legacyCutoff
+        );
 
-        for (Booking booking : expiredBookings) {
+        for (Long bookingId : expiredBookingIds) {
+            Booking booking = bookingRepository.findByIdWithLock(bookingId).orElse(null);
+            if (booking == null || booking.getStatus() != BookingStatus.RESERVED) {
+                continue;
+            }
+
+            LocalDateTime expiry = booking.getExpiresAt() != null
+                    ? booking.getExpiresAt()
+                    : booking.getCreatedAt().plusMinutes(RESERVATION_MINUTES);
+            if (expiry.isAfter(now)) {
+                continue;
+            }
+
             Event event = eventRepository.findByIdWithLock(booking.getEvent().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
             event.setAvailableTickets(event.getAvailableTickets() + booking.getQuantity());
@@ -183,7 +203,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse cancelBooking(String userEmail, Long bookingId, String reason) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdWithLock(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         // Kiểm tra chủ nhân booking
@@ -222,7 +242,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse refundBooking(String userEmail, Long bookingId, String reason) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdWithLock(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         if (!booking.getUser().getEmail().equals(userEmail)) {
@@ -247,7 +267,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public String createPaymentUrl(String userEmail, Long bookingId, String clientIp) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdWithLock(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         if (!booking.getUser().getEmail().equals(userEmail)) {
@@ -260,6 +280,10 @@ public class BookingServiceImpl implements BookingService {
 
         if (booking.getStatus() != BookingStatus.RESERVED) {
             throw new IllegalArgumentException("Only RESERVED bookings can be paid. Current status: " + booking.getStatus());
+        }
+
+        if (booking.getExpiresAt() != null && !booking.getExpiresAt().isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("This reservation has expired");
         }
 
         String orderId = "booking_" + booking.getId();
@@ -323,7 +347,7 @@ public class BookingServiceImpl implements BookingService {
             return false;
         }
 
-        Booking booking = bookingRepository.findById(parsedBookingId)
+        Booking booking = bookingRepository.findByIdWithLock(parsedBookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
         String expectedAmount = booking.getTotalPrice()
@@ -524,6 +548,7 @@ public class BookingServiceImpl implements BookingService {
         response.setTotalPrice(booking.getTotalPrice());
         response.setStatus(booking.getStatus().name());
         response.setCreatedAt(booking.getCreatedAt());
+        response.setExpiresAt(booking.getExpiresAt());
         response.setUpdatedAt(booking.getUpdatedAt());
         response.setCancelReason(booking.getCancelReason());
         response.setRefundReason(booking.getRefundReason());

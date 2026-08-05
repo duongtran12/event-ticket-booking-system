@@ -89,6 +89,7 @@ class BookingServiceImplTest {
         assertEquals(BigDecimal.valueOf(300000), response.getTotalPrice());
         assertEquals("RESERVED", response.getStatus());
         assertEquals(97, event.getAvailableTickets());
+        assertEquals(true, response.getExpiresAt().isAfter(LocalDateTime.now()));
     }
 
     @Test
@@ -103,7 +104,7 @@ class BookingServiceImplTest {
         booking.setTotalPrice(BigDecimal.valueOf(300000));
         booking.setStatus(BookingStatus.RESERVED);
 
-        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findByIdWithLock(10L)).thenReturn(Optional.of(booking));
         when(eventRepository.findByIdWithLock(1L)).thenReturn(Optional.of(event));
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -144,7 +145,7 @@ class BookingServiceImplTest {
         Booking booking = buildReservedBooking(10L, BigDecimal.valueOf(300000));
         Map<String, String> params = buildSignedCallback("10", "30000000", "booking_10_123456");
 
-        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findByIdWithLock(10L)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         boolean result = bookingService.handlePaymentCallback(params);
@@ -165,14 +166,14 @@ class BookingServiceImplTest {
         boolean result = bookingService.handlePaymentCallback(params);
 
         assertEquals(false, result);
-        verify(bookingRepository, never()).findById(any());
+        verify(bookingRepository, never()).findByIdWithLock(any());
     }
 
     @Test
     void paymentCallbackShouldRejectMismatchedAmount() throws Exception {
         Booking booking = buildReservedBooking(10L, BigDecimal.valueOf(300000));
         Map<String, String> params = buildSignedCallback("10", "100", "booking_10_123456");
-        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findByIdWithLock(10L)).thenReturn(Optional.of(booking));
 
         boolean result = bookingService.handlePaymentCallback(params);
 
@@ -188,7 +189,7 @@ class BookingServiceImplTest {
         booking.getEvent().setDateTime(LocalDateTime.now().plusDays(2));
         booking.setTicketType(buildTicketType(20L, booking.getEvent(), BigDecimal.valueOf(100000), 50));
 
-        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findByIdWithLock(10L)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         BookingResponse response = bookingService.refundBooking("user@example.com", 10L, "Changed plans");
@@ -199,6 +200,24 @@ class BookingServiceImplTest {
         verify(eventRepository, never()).save(any());
         verify(ticketTypeRepository, never()).save(any());
         verify(emailService, never()).sendRefundEmail(any());
+    }
+
+    @Test
+    void expirationJobShouldRecheckStatusAfterAcquiringBookingLock() {
+        Booking paidBooking = buildReservedBooking(10L, BigDecimal.valueOf(300000));
+        paidBooking.setStatus(BookingStatus.SOLD);
+        paidBooking.setExpiresAt(LocalDateTime.now().minusMinutes(1));
+
+        when(bookingRepository.findExpiredReservationIds(
+                any(BookingStatus.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(java.util.List.of(10L));
+        when(bookingRepository.findByIdWithLock(10L)).thenReturn(Optional.of(paidBooking));
+
+        bookingService.releaseExpiredReservations();
+
+        assertEquals(BookingStatus.SOLD, paidBooking.getStatus());
+        verify(eventRepository, never()).findByIdWithLock(any());
+        verify(bookingRepository, never()).save(any());
     }
 
     private Booking buildReservedBooking(Long id, BigDecimal totalPrice) {
