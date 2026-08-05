@@ -53,6 +53,8 @@ export function ChatBox({ open, messages, onClose, onSend }) {
         bottom: '24px',
         width: '360px',
         maxWidth: 'calc(100vw - 32px)',
+        height: 'min(680px, calc(100dvh - 32px))',
+        maxHeight: 'calc(100dvh - 32px)',
         zIndex: 9999,
         borderRadius: '24px',
         boxShadow: '0 24px 80px rgba(15, 23, 42, 0.18)',
@@ -70,7 +72,8 @@ export function ChatBox({ open, messages, onClose, onSend }) {
           justifyContent: 'space-between',
           padding: '18px 20px',
           background: '#0f172a',
-          color: '#ffffff'
+          color: '#ffffff',
+          flexShrink: 0
         }}
       >
         <div>
@@ -97,9 +100,9 @@ export function ChatBox({ open, messages, onClose, onSend }) {
       <div
         style={{
           flex: 1,
-          minHeight: '250px',
-          maxHeight: '420px',
+          minHeight: 0,
           overflowY: 'auto',
+          overscrollBehavior: 'contain',
           padding: '16px',
           background: '#f8fafc'
         }}
@@ -142,7 +145,8 @@ export function ChatBox({ open, messages, onClose, onSend }) {
         style={{
           padding: '14px 18px',
           background: '#ffffff',
-          borderTop: '1px solid #e2e8f0'
+          borderTop: '1px solid #e2e8f0',
+          flexShrink: 0
         }}
       >
         <textarea
