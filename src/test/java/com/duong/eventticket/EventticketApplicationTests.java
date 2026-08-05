@@ -65,6 +65,35 @@ class EventticketApplicationTests {
 	}
 
 	@Test
+	void eventRequestShouldValidateNestedTicketTypes() {
+		EventRequest request = new EventRequest();
+		request.setTitle("Invalid event");
+		request.setLocation("Ho Chi Minh City");
+		request.setDateTime(LocalDateTime.now().plusDays(1));
+		com.duong.eventticket.dto.request.TicketTypeRequest ticketType =
+				new com.duong.eventticket.dto.request.TicketTypeRequest();
+		ticketType.setName("General");
+		ticketType.setPrice(java.math.BigDecimal.valueOf(100000));
+		ticketType.setTotalTickets(0);
+		request.setTicketTypes(List.of(ticketType));
+
+		Set<ConstraintViolation<EventRequest>> violations = validator.validate(request);
+
+		assertTrue(violations.stream().anyMatch(violation ->
+				violation.getPropertyPath().toString().equals("ticketTypes[0].totalTickets")));
+	}
+
+	@Test
+	void bookingRequestShouldRejectMoreThanTwentyTickets() {
+		BookingRequest request = new BookingRequest();
+		request.setEventId(1L);
+		request.setTicketTypeId(1L);
+		request.setQuantity(21);
+
+		assertFalse(validator.validate(request).isEmpty());
+	}
+
+	@Test
 	void loginRequestShouldRejectShortPassword() {
 		LoginRequest request = new LoginRequest();
 		request.setEmail("user@example.com");

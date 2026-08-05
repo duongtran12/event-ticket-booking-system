@@ -132,6 +132,19 @@ class EventServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> eventService.getEventById(99L));
     }
 
+    @Test
+    void createEventShouldRejectDuplicateTicketTypeNamesIgnoringCaseAndSpaces() {
+        EventRequest request = buildEventRequest("Spring Boot Workshop", 100);
+        com.duong.eventticket.dto.request.TicketTypeRequest duplicate =
+                new com.duong.eventticket.dto.request.TicketTypeRequest();
+        duplicate.setName("  general  ");
+        duplicate.setPrice(BigDecimal.valueOf(200000));
+        duplicate.setTotalTickets(50);
+        request.setTicketTypes(List.of(request.getTicketTypes().getFirst(), duplicate));
+
+        assertThrows(IllegalArgumentException.class, () -> eventService.createEvent(request));
+    }
+
     private EventRequest buildEventRequest(String title, int totalTickets) {
         EventRequest request = new EventRequest();
         request.setTitle(title);

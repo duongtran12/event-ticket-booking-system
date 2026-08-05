@@ -82,6 +82,7 @@ export function AdminForm({ values, onChange, onSubmit, loading, submitLabel = '
                   }}
                   type="text"
                   placeholder="Tên loại vé"
+                  maxLength={100}
                   required
                   style={inputStyle}
                 />
@@ -111,7 +112,8 @@ export function AdminForm({ values, onChange, onSubmit, loading, submitLabel = '
                     onChange('ticketTypes', next);
                   }}
                   type="number"
-                  min="0"
+                  min="1"
+                  max="1000000"
                   placeholder="Số vé"
                   required
                   style={inputStyle}
@@ -140,6 +142,7 @@ export function AdminForm({ values, onChange, onSubmit, loading, submitLabel = '
           ))}
           <button
             type="button"
+            disabled={(values.ticketTypes || []).length >= 20}
             onClick={() => {
               onChange('ticketTypes', [...(values.ticketTypes || []), { name: '', price: '', totalTickets: '' }]);
             }}

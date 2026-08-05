@@ -20,6 +20,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,13 +35,14 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventResponse createEvent(EventRequest request) {
+        validateTicketTypeNames(request);
         Event event = new Event();
         applyRequest(event, request);
 
         List<TicketType> ticketTypes = request.getTicketTypes().stream()
                 .map(ticketTypeRequest -> {
                     TicketType ticketType = new TicketType();
-                    ticketType.setName(ticketTypeRequest.getName());
+                    ticketType.setName(ticketTypeRequest.getName().trim());
                     ticketType.setPrice(ticketTypeRequest.getPrice());
                     ticketType.setTotalTickets(ticketTypeRequest.getTotalTickets());
                     ticketType.setAvailableTickets(ticketTypeRequest.getTotalTickets());
@@ -74,6 +78,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventResponse updateEvent(Long id, EventRequest request) {
+        validateTicketTypeNames(request);
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
 
@@ -95,7 +100,7 @@ public class EventServiceImpl implements EventService {
         List<TicketType> ticketTypes = request.getTicketTypes().stream()
                 .map(ticketTypeRequest -> {
                     TicketType ticketType = new TicketType();
-                    ticketType.setName(ticketTypeRequest.getName());
+                    ticketType.setName(ticketTypeRequest.getName().trim());
                     ticketType.setPrice(ticketTypeRequest.getPrice());
                     ticketType.setTotalTickets(ticketTypeRequest.getTotalTickets());
                     ticketType.setAvailableTickets(ticketTypeRequest.getTotalTickets());
@@ -148,6 +153,16 @@ public class EventServiceImpl implements EventService {
         event.setLocation(request.getLocation());
         event.setImageUrl(request.getImageUrl());
         event.setDateTime(request.getDateTime());
+    }
+
+    private void validateTicketTypeNames(EventRequest request) {
+        Set<String> normalizedNames = new HashSet<>();
+        for (var ticketType : request.getTicketTypes()) {
+            String normalizedName = ticketType.getName().trim().toLowerCase(Locale.ROOT);
+            if (!normalizedNames.add(normalizedName)) {
+                throw new IllegalArgumentException("Ticket type names must be unique within an event");
+            }
+        }
     }
 
     private int calculateAvailableTickets(Event event, Integer newTotalTickets) {

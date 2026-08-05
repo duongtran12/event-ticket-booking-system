@@ -240,7 +240,7 @@ export function EventCard({ event, quantity, onQuantityChange, onBook, selectedT
               id={`quantity-${event.id}`}
               type="number"
               min="1"
-              max={event.availableTickets || 10}
+              max={Math.min(event.availableTickets || 1, 20)}
               value={quantity}
               onChange={(e) => onQuantityChange(event.id, Number(e.target.value))}
               style={{

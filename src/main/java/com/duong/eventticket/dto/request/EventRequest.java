@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,6 +34,8 @@ public class EventRequest {
     @Future(message = "Event date must be in the future")
     private LocalDateTime dateTime;
 
-    @NotNull(message = "Ticket types are required")
+    @NotEmpty(message = "At least one ticket type is required")
+    @Size(max = 20, message = "An event cannot have more than 20 ticket types")
+    @Valid
     private List<TicketTypeRequest> ticketTypes;
 }
