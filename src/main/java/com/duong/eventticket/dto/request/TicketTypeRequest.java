@@ -16,6 +16,9 @@ import java.math.BigDecimal;
 @Setter
 public class TicketTypeRequest {
 
+    @Positive(message = "Ticket type ID must be positive")
+    private Long id;
+
     @NotBlank(message = "Ticket type name is required")
     @Size(max = 100, message = "Ticket type name must not exceed 100 characters")
     private String name;

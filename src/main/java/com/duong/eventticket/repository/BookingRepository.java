@@ -53,4 +53,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByStatusAndTicketsEmpty(@Param("status") BookingStatus status);
 
     boolean existsByEventIdAndStatusIn(Long eventId, List<BookingStatus> statuses);
+
+    boolean existsByTicketTypeId(Long ticketTypeId);
 }

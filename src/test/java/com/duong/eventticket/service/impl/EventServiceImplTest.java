@@ -4,6 +4,7 @@ import com.duong.eventticket.dto.request.EventRequest;
 import com.duong.eventticket.dto.response.EventResponse;
 import com.duong.eventticket.entity.BookingStatus;
 import com.duong.eventticket.entity.Event;
+import com.duong.eventticket.entity.TicketType;
 import com.duong.eventticket.exception.custom.ResourceNotFoundException;
 import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
@@ -59,8 +60,17 @@ class EventServiceImplTest {
         existingEvent.setPrice(BigDecimal.valueOf(100000));
         existingEvent.setTotalTickets(100);
         existingEvent.setAvailableTickets(70);
+        TicketType existingTicketType = new TicketType();
+        existingTicketType.setId(10L);
+        existingTicketType.setEvent(existingEvent);
+        existingTicketType.setName("General");
+        existingTicketType.setPrice(BigDecimal.valueOf(150000));
+        existingTicketType.setTotalTickets(100);
+        existingTicketType.setAvailableTickets(70);
+        existingEvent.getTicketTypes().add(existingTicketType);
 
         EventRequest request = buildEventRequest("New Title", 120);
+        request.getTicketTypes().getFirst().setId(10L);
 
         when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -143,6 +153,30 @@ class EventServiceImplTest {
         request.setTicketTypes(List.of(request.getTicketTypes().getFirst(), duplicate));
 
         assertThrows(IllegalArgumentException.class, () -> eventService.createEvent(request));
+    }
+
+    @Test
+    void updateEventShouldRejectRemovingTicketTypeUsedByBookingHistory() {
+        Event existingEvent = new Event();
+        existingEvent.setId(1L);
+        existingEvent.setDateTime(LocalDateTime.now().plusDays(2));
+        existingEvent.setTotalTickets(100);
+        existingEvent.setAvailableTickets(100);
+        existingEvent.setPrice(BigDecimal.valueOf(150000));
+        TicketType historicalType = new TicketType();
+        historicalType.setId(10L);
+        historicalType.setEvent(existingEvent);
+        historicalType.setName("Historical VIP");
+        historicalType.setPrice(BigDecimal.valueOf(300000));
+        historicalType.setTotalTickets(20);
+        historicalType.setAvailableTickets(20);
+        existingEvent.getTicketTypes().add(historicalType);
+
+        EventRequest request = buildEventRequest("Updated event", 100);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
+        when(bookingRepository.existsByTicketTypeId(10L)).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class, () -> eventService.updateEvent(1L, request));
     }
 
     private EventRequest buildEventRequest(String title, int totalTickets) {

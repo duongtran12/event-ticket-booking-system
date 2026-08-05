@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,35 +86,13 @@ public class EventServiceImpl implements EventService {
 
         validateEventCanBeModified(event, "update");
 
-        int soldTickets = getSoldTickets(event);
-        int newTotalTickets = request.getTicketTypes().stream().mapToInt(ticketTypeRequest -> ticketTypeRequest.getTotalTickets()).sum();
-        int newAvailableTickets = calculateAvailableTickets(event, newTotalTickets);
-        if (newAvailableTickets < 0) {
-            throw new IllegalArgumentException(
-                    "Cannot reduce total tickets. New capacity (" + newTotalTickets + ") " +
-                    "is less than tickets already sold (" + soldTickets + ")."
-            );
-        }
-
         applyRequest(event, request);
+        updateTicketTypes(event, request);
 
-        event.getTicketTypes().clear();
-        List<TicketType> ticketTypes = request.getTicketTypes().stream()
-                .map(ticketTypeRequest -> {
-                    TicketType ticketType = new TicketType();
-                    ticketType.setName(ticketTypeRequest.getName().trim());
-                    ticketType.setPrice(ticketTypeRequest.getPrice());
-                    ticketType.setTotalTickets(ticketTypeRequest.getTotalTickets());
-                    ticketType.setAvailableTickets(ticketTypeRequest.getTotalTickets());
-                    ticketType.setEvent(event);
-                    return ticketType;
-                })
-                .collect(Collectors.toList());
-
-        event.setTicketTypes(ticketTypes);
-        event.setTotalTickets(ticketTypes.stream().mapToInt(TicketType::getTotalTickets).sum());
-        event.setAvailableTickets(event.getTotalTickets() - soldTickets);
-        event.setPrice(ticketTypes.stream().map(TicketType::getPrice).min(Comparator.naturalOrder()).orElse(BigDecimal.ZERO));
+        event.setTotalTickets(event.getTicketTypes().stream().mapToInt(TicketType::getTotalTickets).sum());
+        event.setAvailableTickets(event.getTicketTypes().stream().mapToInt(TicketType::getAvailableTickets).sum());
+        event.setPrice(event.getTicketTypes().stream().map(TicketType::getPrice)
+                .min(Comparator.naturalOrder()).orElse(BigDecimal.ZERO));
 
         Event updatedEvent = eventRepository.save(event);
         return mapToResponse(updatedEvent);
@@ -165,13 +145,47 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private int calculateAvailableTickets(Event event, Integer newTotalTickets) {
-        int ticketDifference = newTotalTickets - event.getTotalTickets();
-        return event.getAvailableTickets() + ticketDifference;
-    }
+    private void updateTicketTypes(Event event, EventRequest request) {
+        Map<Long, TicketType> existingById = new HashMap<>();
+        event.getTicketTypes().forEach(ticketType -> existingById.put(ticketType.getId(), ticketType));
+        Set<Long> retainedIds = new HashSet<>();
 
-    private int getSoldTickets(Event event) {
-        return event.getTotalTickets() - event.getAvailableTickets();
+        for (var ticketTypeRequest : request.getTicketTypes()) {
+            TicketType ticketType;
+            if (ticketTypeRequest.getId() == null) {
+                ticketType = new TicketType();
+                ticketType.setEvent(event);
+                ticketType.setAvailableTickets(ticketTypeRequest.getTotalTickets());
+                event.getTicketTypes().add(ticketType);
+            } else {
+                ticketType = existingById.get(ticketTypeRequest.getId());
+                if (ticketType == null) {
+                    throw new IllegalArgumentException("Ticket type does not belong to this event: " + ticketTypeRequest.getId());
+                }
+                retainedIds.add(ticketType.getId());
+                int allocatedTickets = ticketType.getTotalTickets() - ticketType.getAvailableTickets();
+                if (ticketTypeRequest.getTotalTickets() < allocatedTickets) {
+                    throw new IllegalArgumentException("Cannot reduce ticket capacity below allocated tickets for " + ticketType.getName());
+                }
+                ticketType.setAvailableTickets(ticketTypeRequest.getTotalTickets() - allocatedTickets);
+            }
+
+            ticketType.setName(ticketTypeRequest.getName().trim());
+            ticketType.setPrice(ticketTypeRequest.getPrice());
+            ticketType.setTotalTickets(ticketTypeRequest.getTotalTickets());
+        }
+
+        List<TicketType> removedTypes = event.getTicketTypes().stream()
+                .filter(ticketType -> ticketType.getId() != null && !retainedIds.contains(ticketType.getId()))
+                .toList();
+        for (TicketType removedType : removedTypes) {
+            if (bookingRepository.existsByTicketTypeId(removedType.getId())) {
+                throw new IllegalArgumentException(
+                        "Cannot remove ticket type '" + removedType.getName() + "' because it is referenced by booking history"
+                );
+            }
+            event.getTicketTypes().remove(removedType);
+        }
     }
 
     private EventResponse mapToResponse(Event event) {

@@ -270,6 +270,7 @@ function App() {
       imageUrl: eventData.imageUrl || '',
       dateTime: eventData.dateTime,
       ticketTypes: eventData.ticketTypes?.map((type) => ({
+        id: type.id,
         name: type.name,
         price: type.price,
         totalTickets: type.totalTickets,
@@ -299,6 +300,7 @@ function App() {
         imageUrl: adminValues.imageUrl,
         dateTime: adminValues.dateTime,
         ticketTypes: adminValues.ticketTypes.map((type) => ({
+          id: type.id || null,
           name: type.name,
           price: Number(type.price),
           totalTickets: Number(type.totalTickets),
