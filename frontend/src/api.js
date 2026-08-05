@@ -90,7 +90,7 @@ export async function registerUser(userData) {
 }
 
 export async function getUserProfile(token) {
-  const response = await fetch(`${API_BASE}/auth/me`, {
+  const response = await fetch(`${API_BASE}/users/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -100,7 +100,7 @@ export async function getUserProfile(token) {
 }
 
 export async function updateUserProfile(token, profileData) {
-  const response = await fetch(`${API_BASE}/auth/me`, {
+  const response = await fetch(`${API_BASE}/users/me`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
