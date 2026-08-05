@@ -7,12 +7,15 @@ import com.duong.eventticket.entity.BookingStatus;
 import com.duong.eventticket.entity.Event;
 import com.duong.eventticket.entity.TicketType;
 import com.duong.eventticket.entity.Ticket;
+import com.duong.eventticket.entity.PaymentTransaction;
+import com.duong.eventticket.entity.PaymentStatus;
 import com.duong.eventticket.entity.User;
 import com.duong.eventticket.exception.custom.ResourceNotFoundException;
 import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
 import com.duong.eventticket.repository.TicketTypeRepository;
 import com.duong.eventticket.repository.TicketRepository;
+import com.duong.eventticket.repository.PaymentTransactionRepository;
 import com.duong.eventticket.repository.UserRepository;
 import com.duong.eventticket.service.BookingService;
 import com.duong.eventticket.service.EmailService;
@@ -55,6 +58,7 @@ public class BookingServiceImpl implements BookingService {
     private final EventRepository eventRepository;
     private final TicketTypeRepository ticketTypeRepository;
     private final TicketRepository ticketRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
 
@@ -288,8 +292,15 @@ public class BookingServiceImpl implements BookingService {
 
         String orderId = "booking_" + booking.getId();
         String amount = booking.getTotalPrice().multiply(BigDecimal.valueOf(100)).toBigIntegerExact().toString();
-        String vnpTxnRef = orderId + "_" + System.currentTimeMillis();
+        String vnpTxnRef = orderId + "_" + UUID.randomUUID();
         String vnpCreateDate = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+
+        PaymentTransaction paymentTransaction = new PaymentTransaction();
+        paymentTransaction.setBooking(booking);
+        paymentTransaction.setTransactionReference(vnpTxnRef);
+        paymentTransaction.setAmount(booking.getTotalPrice());
+        paymentTransaction.setStatus(PaymentStatus.PENDING);
+        paymentTransactionRepository.save(paymentTransaction);
 
         Map<String, String> params = new TreeMap<>();
         params.put("vnp_Version", "2.1.0");
@@ -347,32 +358,74 @@ public class BookingServiceImpl implements BookingService {
             return false;
         }
 
-        Booking booking = bookingRepository.findByIdWithLock(parsedBookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
-
-        String expectedAmount = booking.getTotalPrice()
-                .multiply(BigDecimal.valueOf(100))
-                .toBigIntegerExact()
-                .toString();
         String transactionReference = params.get("vnp_TxnRef");
-        String expectedReferencePrefix = "booking_" + booking.getId() + "_";
-
-        if (!expectedAmount.equals(params.get("vnp_Amount"))
-                || transactionReference == null
-                || !transactionReference.startsWith(expectedReferencePrefix)) {
+        if (transactionReference == null) {
             return false;
         }
 
-        if ("00".equals(responseCode)
-                && "00".equals(params.get("vnp_TransactionStatus"))
-                && booking.getStatus() == BookingStatus.RESERVED) {
+        PaymentTransaction paymentTransaction = paymentTransactionRepository
+                .findByTransactionReferenceWithLock(transactionReference)
+                .orElse(null);
+        if (paymentTransaction == null
+                || !paymentTransaction.getBooking().getId().equals(parsedBookingId)) {
+            return false;
+        }
+
+        String expectedAmount = paymentTransaction.getAmount()
+                .multiply(BigDecimal.valueOf(100))
+                .toBigIntegerExact()
+                .toString();
+        if (!expectedAmount.equals(params.get("vnp_Amount"))) {
+            paymentTransaction.setStatus(PaymentStatus.REVIEW_REQUIRED);
+            paymentTransaction.setResponseCode(responseCode);
+            paymentTransactionRepository.save(paymentTransaction);
+            return false;
+        }
+
+        if (paymentTransaction.getStatus() == PaymentStatus.SUCCESS) {
+            return true;
+        }
+
+        paymentTransaction.setResponseCode(responseCode);
+        paymentTransaction.setGatewayTransactionNumber(params.get("vnp_TransactionNo"));
+        paymentTransaction.setBankCode(params.get("vnp_BankCode"));
+
+        boolean gatewaySuccess = "00".equals(responseCode)
+                && "00".equals(params.get("vnp_TransactionStatus"));
+        if (!gatewaySuccess) {
+            paymentTransaction.setStatus(PaymentStatus.FAILED);
+            paymentTransactionRepository.save(paymentTransaction);
+            return false;
+        }
+
+        Booking booking = bookingRepository.findByIdWithLock(parsedBookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+        if (booking.getStatus() == BookingStatus.RESERVED) {
             issueTickets(booking);
             booking.setStatus(BookingStatus.SOLD);
             Booking saved = bookingRepository.save(booking);
+            paymentTransaction.setStatus(PaymentStatus.SUCCESS);
+            paymentTransaction.setPaidAt(parseVnpayDate(params.get("vnp_PayDate")));
+            paymentTransactionRepository.save(paymentTransaction);
             emailService.sendTicketEmail(saved);
             return true;
         }
+
+        paymentTransaction.setStatus(PaymentStatus.REVIEW_REQUIRED);
+        paymentTransaction.setPaidAt(parseVnpayDate(params.get("vnp_PayDate")));
+        paymentTransactionRepository.save(paymentTransaction);
         return false;
+    }
+
+    private LocalDateTime parseVnpayDate(String value) {
+        if (value == null || value.isBlank()) {
+            return LocalDateTime.now();
+        }
+        try {
+            return LocalDateTime.parse(value, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        } catch (java.time.format.DateTimeParseException ex) {
+            return LocalDateTime.now();
+        }
     }
 
     private boolean isValidVnpaySignature(Map<String, String> callbackParams, String receivedHash) {

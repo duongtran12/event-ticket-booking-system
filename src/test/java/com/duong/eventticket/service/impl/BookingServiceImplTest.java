@@ -7,12 +7,15 @@ import com.duong.eventticket.entity.BookingStatus;
 import com.duong.eventticket.entity.Event;
 import com.duong.eventticket.entity.TicketType;
 import com.duong.eventticket.entity.User;
+import com.duong.eventticket.entity.PaymentTransaction;
+import com.duong.eventticket.entity.PaymentStatus;
 import com.duong.eventticket.exception.custom.ResourceNotFoundException;
 import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
 import com.duong.eventticket.repository.TicketTypeRepository;
 import com.duong.eventticket.repository.TicketRepository;
 import com.duong.eventticket.repository.UserRepository;
+import com.duong.eventticket.repository.PaymentTransactionRepository;
 import com.duong.eventticket.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class BookingServiceImplTest {
@@ -66,6 +70,9 @@ class BookingServiceImplTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private PaymentTransactionRepository paymentTransactionRepository;
 
     @InjectMocks
     private BookingServiceImpl bookingService;
@@ -153,20 +160,29 @@ class BookingServiceImplTest {
     void paymentCallbackShouldCompleteBookingWhenVnpayDataIsValid() throws Exception {
         Booking booking = buildReservedBooking(10L, BigDecimal.valueOf(300000));
         Map<String, String> params = buildSignedCallback("10", "30000000", "booking_10_123456");
+        PaymentTransaction paymentTransaction = buildPaymentTransaction(booking, "booking_10_123456");
 
+        when(paymentTransactionRepository.findByTransactionReferenceWithLock("booking_10_123456"))
+                .thenReturn(Optional.of(paymentTransaction));
         when(bookingRepository.findByIdWithLock(10L)).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        boolean result = bookingService.handlePaymentCallback(params);
+        boolean firstResult = bookingService.handlePaymentCallback(params);
+        boolean repeatedResult = bookingService.handlePaymentCallback(params);
 
-        assertEquals(true, result);
+        assertEquals(true, firstResult);
+        assertEquals(true, repeatedResult);
         assertEquals(BookingStatus.SOLD, booking.getStatus());
+        assertEquals(PaymentStatus.SUCCESS, paymentTransaction.getStatus());
         assertEquals(3, booking.getTickets().size());
         assertEquals(3, booking.getTickets().stream()
                 .map(com.duong.eventticket.entity.Ticket::getQrCodeValue)
                 .collect(Collectors.toSet()).size());
         assertNotNull(booking.getTickets().getFirst().getQrCodeValue());
-        verify(emailService).sendTicketEmail(booking);
+        verify(emailService, times(1)).sendTicketEmail(booking);
+        verify(bookingRepository, times(1)).save(booking);
     }
 
     @Test
@@ -187,12 +203,15 @@ class BookingServiceImplTest {
     void paymentCallbackShouldRejectMismatchedAmount() throws Exception {
         Booking booking = buildReservedBooking(10L, BigDecimal.valueOf(300000));
         Map<String, String> params = buildSignedCallback("10", "100", "booking_10_123456");
-        when(bookingRepository.findByIdWithLock(10L)).thenReturn(Optional.of(booking));
+        PaymentTransaction paymentTransaction = buildPaymentTransaction(booking, "booking_10_123456");
+        when(paymentTransactionRepository.findByTransactionReferenceWithLock("booking_10_123456"))
+                .thenReturn(Optional.of(paymentTransaction));
 
         boolean result = bookingService.handlePaymentCallback(params);
 
         assertEquals(false, result);
         assertEquals(BookingStatus.RESERVED, booking.getStatus());
+        assertEquals(PaymentStatus.REVIEW_REQUIRED, paymentTransaction.getStatus());
         verify(bookingRepository, never()).save(any());
     }
 
@@ -243,6 +262,16 @@ class BookingServiceImplTest {
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.RESERVED);
         return booking;
+    }
+
+    private PaymentTransaction buildPaymentTransaction(Booking booking, String reference) {
+        PaymentTransaction transaction = new PaymentTransaction();
+        transaction.setId(1L);
+        transaction.setBooking(booking);
+        transaction.setTransactionReference(reference);
+        transaction.setAmount(booking.getTotalPrice());
+        transaction.setStatus(PaymentStatus.PENDING);
+        return transaction;
     }
 
     private Map<String, String> buildSignedCallback(String bookingId, String amount, String transactionReference)
