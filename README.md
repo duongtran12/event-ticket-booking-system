@@ -156,7 +156,13 @@ CREATE DATABASE IF NOT EXISTS event_ticket_db;
 
 ### 3. Configuration
 
-Edit `src/main/resources/application.yml` or set environment variables (do **not** commit sensitive values to version control):
+Copy the environment template and replace its placeholder values (do **not** commit `.env`):
+
+```bash
+cp .env.example .env
+```
+
+On PowerShell, use `Copy-Item .env.example .env` instead. For local backend runs outside Docker, export the same variables in your shell or IDE run configuration.
 
 | Variable | Description |
 |----------|-------------|
@@ -175,7 +181,7 @@ Edit `src/main/resources/application.yml` or set environment variables (do **not
 | `MAIL_USERNAME` | SMTP username |
 | `MAIL_PASSWORD` | SMTP password |
 
-> ⚠️ **Security:** Update all secret values (JWT secret, database credentials, VNPay keys, API keys, SMTP credentials) with your own values. The defaults in `application.yml` are for local development only.
+> ⚠️ **Security:** The repository does not provide default secrets. Generate your own values and keep them outside version control. If this repository previously contained real credentials, revoke and rotate them because removing them from the latest commit does not remove them from Git history.
 
 ### 4. Run the Application
 
