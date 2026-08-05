@@ -33,6 +33,8 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -90,6 +92,8 @@ class BookingServiceImplTest {
         assertEquals("RESERVED", response.getStatus());
         assertEquals(97, event.getAvailableTickets());
         assertEquals(true, response.getExpiresAt().isAfter(LocalDateTime.now()));
+        assertNull(response.getQrCodeValue());
+        assertNull(response.getQrCodeImage());
     }
 
     @Test
@@ -152,6 +156,7 @@ class BookingServiceImplTest {
 
         assertEquals(true, result);
         assertEquals(BookingStatus.SOLD, booking.getStatus());
+        assertNotNull(booking.getQrCodeValue());
         verify(emailService).sendTicketEmail(booking);
     }
 

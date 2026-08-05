@@ -115,11 +115,6 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // Now that booking ID exists, generate a stable QR code value and persist
-        String qr = buildQrCodeValue(savedBooking);
-        savedBooking.setQrCodeValue(qr);
-        bookingRepository.save(savedBooking);
-
         return mapToResponse(savedBooking);
     }
 
