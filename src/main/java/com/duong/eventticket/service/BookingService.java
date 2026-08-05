@@ -23,8 +23,6 @@ public interface BookingService {
 
     String createPaymentUrl(String userEmail, Long bookingId, String clientIp);
 
-    BookingResponse completePayment(String userEmail, Long bookingId);
-
     boolean handlePaymentCallback(Map<String, String> params);
 
     long countBookingsByStatus(BookingStatus status);

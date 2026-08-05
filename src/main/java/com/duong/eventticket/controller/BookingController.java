@@ -110,17 +110,6 @@ public class BookingController {
         return ResponseEntity.ok(Map.of("paymentUrl", paymentUrl));
     }
 
-    @PostMapping("/{id}/complete")
-    @Operation(summary = "Complete payment locally")
-    public ResponseEntity<BookingResponse> completePayment(
-            @PathVariable Long id,
-            Authentication authentication
-    ) {
-        String userEmail = authentication.getName();
-        BookingResponse response = bookingService.completePayment(userEmail, id);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/payment-callback")
     @Operation(summary = "Handle payment callback")
     public ResponseEntity<Void> handlePaymentCallback(@RequestParam Map<String, String> params) {

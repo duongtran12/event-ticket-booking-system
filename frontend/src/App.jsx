@@ -7,7 +7,7 @@ import { AdminForm } from './components/AdminForm';
 import { ProfilePage } from './components/ProfilePage';
 import { ProfileEditForm } from './components/ProfileEditForm';
 import { ChatBox } from './components/ChatBox';
-import { checkInBooking, completePayment, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, refundBooking, sendChatMessage, updateEvent, updateUserProfile } from './api';
+import { checkInBooking, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, refundBooking, sendChatMessage, updateEvent, updateUserProfile } from './api';
 
 const PAGES = {
   HOME: 'home',
@@ -598,33 +598,12 @@ function App() {
       return;
     }
 
-    try {
-      await completePayment(token, bookingId);
-      setMessage('Thanh toán thành công. Vé đã chuyển sang trạng thái SOLD.');
-      if (isAuthenticated) {
-        fetchBookings();
-        setActivePage(PAGES.BOOKINGS);
-      }
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.delete('bookingId');
-        url.searchParams.delete('vnp_ResponseCode');
-        window.history.replaceState({}, document.title, url.pathname + url.search);
-      } catch (ignore) {}
-    } catch (e) {
-      const msg = e.message || '';
-      if (msg.includes('Only RESERVED bookings can be completed') || msg.includes('Current status: SOLD')) {
-        setMessage('Thanh toán đã được xử lý trước đó.');
-        try {
-          const url = new URL(window.location.href);
-          url.searchParams.delete('bookingId');
-          url.searchParams.delete('vnp_ResponseCode');
-          window.history.replaceState({}, document.title, url.pathname + url.search);
-        } catch (ignore) {}
-        if (activePage === PAGES.BOOKINGS) fetchBookings();
-      } else {
-        setError(msg || 'Đã có lỗi xảy ra khi xử lý thanh toán.');
-      }
+    // Payment state is updated exclusively by the backend payment callback.
+    // Never let the browser promote a reservation to SOLD.
+    setMessage('Đang đồng bộ trạng thái thanh toán từ hệ thống.');
+    if (isAuthenticated) {
+      await fetchBookings();
+      setActivePage(PAGES.BOOKINGS);
     }
   };
 

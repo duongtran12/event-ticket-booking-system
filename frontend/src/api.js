@@ -173,17 +173,6 @@ export async function createPayment(token, bookingId, clientIp = '127.0.0.1') {
   return handleResponse(response);
 }
 
-export async function completePayment(token, bookingId) {
-  const response = await fetch(`${API_BASE}/bookings/${bookingId}/complete`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return handleResponse(response);
-}
-
 export async function cancelBooking(token, bookingId, reason) {
   const response = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
     method: 'PUT',

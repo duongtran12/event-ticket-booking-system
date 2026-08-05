@@ -73,26 +73,6 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void completePaymentShouldMarkBookingAsSold() {
-        User user = buildUser();
-        Event event = buildEvent(97, 100000);
-        Booking booking = new Booking();
-        booking.setId(10L);
-        booking.setUser(user);
-        booking.setEvent(event);
-        booking.setQuantity(3);
-        booking.setTotalPrice(BigDecimal.valueOf(300000));
-        booking.setStatus(BookingStatus.RESERVED);
-
-        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        BookingResponse response = bookingService.completePayment("user@example.com", 10L);
-
-        assertEquals("SOLD", response.getStatus());
-    }
-
-    @Test
     void cancelBookingShouldRestoreAvailableTicketsAndMarkBookingCancelled() {
         User user = buildUser();
         Event event = buildEvent(97, 100000);

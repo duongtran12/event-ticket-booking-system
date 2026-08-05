@@ -318,32 +318,6 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingResponse completePayment(String userEmail, Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
-
-        if (!booking.getUser().getEmail().equals(userEmail)) {
-            throw new AccessDeniedException("You do not have permission to confirm this booking");
-        }
-
-        if (booking.getStatus() != BookingStatus.RESERVED) {
-            throw new IllegalArgumentException("Only RESERVED bookings can be completed. Current status: " + booking.getStatus());
-        }
-
-        // Ensure QR code exists when payment completes
-        if (booking.getQrCodeValue() == null || booking.getQrCodeValue().isBlank()) {
-            String qr = buildQrCodeValue(booking);
-            booking.setQrCodeValue(qr);
-        }
-
-        booking.setStatus(BookingStatus.SOLD);
-        Booking saved = bookingRepository.save(booking);
-        emailService.sendTicketEmail(saved);
-        return mapToResponse(saved);
-    }
-
-    @Override
-    @Transactional
     public boolean handlePaymentCallback(Map<String, String> params) {
         String responseCode = params.get("vnp_ResponseCode");
         String bookingId = params.get("bookingId");
