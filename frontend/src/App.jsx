@@ -7,6 +7,7 @@ import { AdminForm } from './components/AdminForm';
 import { ProfilePage } from './components/ProfilePage';
 import { ProfileEditForm } from './components/ProfileEditForm';
 import { ChatBox } from './components/ChatBox';
+import { ReasonModal } from './components/ReasonModal';
 import { checkInBooking, createBooking, createEvent, createPayment, cancelBooking, deleteEvent, getAdminStats, getBookings, getEvents, getUserProfile, loginUser, registerUser, refundBooking, sendChatMessage, updateEvent, updateUserProfile } from './api';
 
 const PAGES = {
@@ -83,9 +84,20 @@ function App() {
   const [checkInResult, setCheckInResult] = useState(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [adminTab, setAdminTab] = useState('overview');
+  const [reasonModal, setReasonModal] = useState({ open: false, mode: null, bookingId: null });
+  const [reasonLoading, setReasonLoading] = useState(false);
 
   const isAuthenticated = !!token;
   const isAdmin = userRole === 'ROLE_ADMIN';
+
+  const handleNavigate = (pageName) => {
+    setActivePage(pageName);
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [activePage]);
 
   useEffect(() => {
     setSavedEventIds(loadSavedEvents(userEmail));
@@ -437,20 +449,20 @@ function App() {
     }
   };
 
-  const handleCancelBooking = async (bookingId) => {
+  const handleCancelBooking = (bookingId) => {
     if (!isAuthenticated) {
       setError('Bạn cần đăng nhập để hủy vé.');
       setActivePage(PAGES.LOGIN);
       return;
     }
 
-    const reason = window.prompt('Nhập lý do hủy vé (tùy chọn):', 'Hủy vì thay đổi kế hoạch');
-    if (reason === null) {
-      return;
-    }
+    setReasonModal({ open: true, mode: 'cancel', bookingId });
+  };
 
+  const submitCancelBooking = async (bookingId, reason) => {
     setError(null);
     setMessage(null);
+    setReasonLoading(true);
 
     try {
       const cancelledBooking = await cancelBooking(token, bookingId, reason.trim() || 'Hủy bởi người dùng');
@@ -466,25 +478,28 @@ function App() {
       if (activePage === PAGES.HOME) {
         fetchEvents();
       }
+      setReasonModal({ open: false, mode: null, bookingId: null });
     } catch (e) {
       setError(e.message);
+    } finally {
+      setReasonLoading(false);
     }
   };
 
-  const handleRefundBooking = async (bookingId) => {
+  const handleRefundBooking = (bookingId) => {
     if (!isAuthenticated) {
       setError('Bạn cần đăng nhập để yêu cầu hoàn vé.');
       setActivePage(PAGES.LOGIN);
       return;
     }
 
-    const reason = window.prompt('Nhập lý do hoàn vé (tùy chọn):', 'Yêu cầu hoàn vé vì thay đổi kế hoạch');
-    if (reason === null) {
-      return;
-    }
+    setReasonModal({ open: true, mode: 'refund', bookingId });
+  };
 
+  const submitRefundBooking = async (bookingId, reason) => {
     setError(null);
     setMessage(null);
+    setReasonLoading(true);
 
     try {
       await refundBooking(token, bookingId, reason.trim() || 'Yêu cầu hoàn vé');
@@ -493,8 +508,11 @@ function App() {
       if (activePage === PAGES.HOME) {
         fetchEvents();
       }
+      setReasonModal({ open: false, mode: null, bookingId: null });
     } catch (e) {
       setError(e.message);
+    } finally {
+      setReasonLoading(false);
     }
   };
 
@@ -563,6 +581,7 @@ function App() {
     if (paymentResult === 'success') {
       setMessage('Thanh toán thành công. Vé đã chuyển sang trạng thái SOLD.');
       if (isAuthenticated) {
+        setBookingsView('sold');
         fetchBookings();
         setActivePage(PAGES.BOOKINGS);
       }
@@ -595,6 +614,7 @@ function App() {
     // Never let the browser promote a reservation to SOLD.
     setMessage('Đang đồng bộ trạng thái thanh toán từ hệ thống.');
     if (isAuthenticated) {
+      setBookingsView('sold');
       await fetchBookings();
       setActivePage(PAGES.BOOKINGS);
     }
@@ -651,7 +671,7 @@ function App() {
     <div className="app-shell">
       <NavBar
         activePage={activePage}
-        onNavigate={setActivePage}
+        onNavigate={handleNavigate}
         isAuthenticated={isAuthenticated}
         isAdmin={isAdmin}
         onLogout={handleLogout}
@@ -689,7 +709,7 @@ function App() {
           <ProfilePage
             profile={profile}
             isAdmin={isAdmin}
-            onGoAdmin={() => setActivePage(PAGES.ADMIN)}
+            onGoAdmin={() => handleNavigate(PAGES.ADMIN)}
             onEdit={() => setProfileEditMode(true)}
           />
         )}
@@ -1864,6 +1884,15 @@ function App() {
           </section>
         )}
         <ChatBox open={chatOpen} messages={chatMessages} onClose={handleCloseChat} onSend={handleSendChat} />
+        <ReasonModal
+          open={reasonModal.open}
+          mode={reasonModal.mode}
+          loading={reasonLoading}
+          onClose={() => setReasonModal({ open: false, mode: null, bookingId: null })}
+          onSubmit={(reason) => reasonModal.mode === 'cancel'
+            ? submitCancelBooking(reasonModal.bookingId, reason)
+            : submitRefundBooking(reasonModal.bookingId, reason)}
+        />
 
         <footer
           style={{

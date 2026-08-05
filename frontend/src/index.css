@@ -1719,3 +1719,111 @@ button {
     gap: 12px;
   }
 }
+.reason-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(7px);
+}
+
+.reason-modal {
+  width: min(100%, 520px);
+  padding: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.32);
+}
+
+.reason-modal-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  place-items: center;
+  border-radius: 15px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.reason-modal-icon.cancel { color: #dc2626; background: #fef2f2; }
+.reason-modal-icon.refund { color: #047857; background: #ecfdf5; }
+
+.reason-modal-heading h2 {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 1.35rem;
+}
+
+.reason-modal-heading p {
+  margin: 0 0 22px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.reason-modal-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.reason-modal-textarea {
+  width: 100%;
+  min-height: 112px;
+  resize: vertical;
+  padding: 13px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  outline: none;
+  color: #0f172a;
+  background: #f8fafc;
+  font: inherit;
+  line-height: 1.5;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.reason-modal-textarea:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.reason-modal-counter {
+  margin-top: 6px;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.reason-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.reason-modal-actions button {
+  padding: 11px 17px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reason-modal-actions button:disabled { cursor: wait; opacity: 0.65; }
+.reason-modal-secondary { border: 1px solid #cbd5e1; color: #475569; background: #ffffff; }
+.reason-modal-primary { border: none; color: #ffffff; }
+.reason-modal-primary.cancel { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.reason-modal-primary.refund { background: linear-gradient(135deg, #10b981, #047857); }
+
+@media (max-width: 560px) {
+  .reason-modal { padding: 22px; border-radius: 20px; }
+  .reason-modal-actions { flex-direction: column-reverse; }
+  .reason-modal-actions button { width: 100%; }
+}
