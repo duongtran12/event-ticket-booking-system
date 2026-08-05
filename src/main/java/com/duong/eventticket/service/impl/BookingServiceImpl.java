@@ -48,6 +48,8 @@ import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 public class BookingServiceImpl implements BookingService {
 
     private static final long RESERVATION_MINUTES = 10;
+    private static final long CHECK_IN_OPEN_HOURS_BEFORE = 2;
+    private static final long CHECK_IN_CLOSE_HOURS_AFTER = 6;
 
     private final BookingRepository bookingRepository;
     private final EventRepository eventRepository;
@@ -405,7 +407,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public com.duong.eventticket.dto.response.CheckInResponse checkInBooking(String adminEmail, byte[] imageBytes) {
+    public com.duong.eventticket.dto.response.CheckInResponse checkInBooking(String adminEmail, Long eventId, byte[] imageBytes) {
         String qrText = decodeQrFromImage(imageBytes);
         if (qrText == null || qrText.isBlank()) {
             return com.duong.eventticket.dto.response.CheckInResponse.failure("Không đọc được mã QR từ ảnh");
@@ -418,6 +420,19 @@ public class BookingServiceImpl implements BookingService {
 
         Ticket ticket = ticketOpt.get();
         Booking booking = ticket.getBooking();
+        if (!booking.getEvent().getId().equals(eventId)) {
+            return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé không thuộc sự kiện đang được chọn");
+        }
+
+        LocalDateTime currentTime = LocalDateTime.now();
+        LocalDateTime checkInOpensAt = booking.getEvent().getDateTime().minusHours(CHECK_IN_OPEN_HOURS_BEFORE);
+        LocalDateTime checkInClosesAt = booking.getEvent().getDateTime().plusHours(CHECK_IN_CLOSE_HOURS_AFTER);
+        if (currentTime.isBefore(checkInOpensAt)) {
+            return com.duong.eventticket.dto.response.CheckInResponse.failure("Chưa đến thời gian check-in của sự kiện");
+        }
+        if (currentTime.isAfter(checkInClosesAt)) {
+            return com.duong.eventticket.dto.response.CheckInResponse.failure("Thời gian check-in của sự kiện đã kết thúc");
+        }
         if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.EXPIRED) {
             return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé không còn hợp lệ");
         }
@@ -430,7 +445,7 @@ public class BookingServiceImpl implements BookingService {
             return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé chưa được thanh toán thành công");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = currentTime;
         ticket.setCheckedIn(true);
         ticket.setCheckedInAt(now);
         ticket.setCheckedInBy(adminEmail);

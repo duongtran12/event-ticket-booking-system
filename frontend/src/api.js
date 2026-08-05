@@ -209,9 +209,10 @@ export async function getAdminStats(token) {
   return handleResponse(response);
 }
 
-export async function checkInBooking(token, file) {
+export async function checkInBooking(token, eventId, file) {
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('eventId', eventId);
 
   const response = await fetch(`${API_BASE}/bookings/check-in`, {
     method: 'POST',

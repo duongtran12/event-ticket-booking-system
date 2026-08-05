@@ -84,6 +84,7 @@ function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [checkInFile, setCheckInFile] = useState(null);
+  const [checkInEventId, setCheckInEventId] = useState('');
   const [checkInResult, setCheckInResult] = useState(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [adminTab, setAdminTab] = useState('overview');
@@ -667,17 +668,43 @@ function App() {
       setCheckInResult({ success: false, message: 'Vui lòng chọn ảnh QR trước.' });
       return;
     }
+    if (!checkInEventId) {
+      setCheckInResult({ success: false, message: 'Vui lòng chọn sự kiện cần check-in.' });
+      return;
+    }
 
     setCheckInLoading(true);
     setCheckInResult(null);
     try {
-      const data = await checkInBooking(token, checkInFile);
+      const data = await checkInBooking(token, checkInEventId, checkInFile);
       setCheckInResult(data);
     } catch (e) {
       setCheckInResult({ success: false, message: e.message || 'Không thể xử lý check-in.' });
     } finally {
       setCheckInLoading(false);
     }
+  };
+
+  const handleCheckInFileChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setCheckInResult(null);
+    if (!file) {
+      setCheckInFile(null);
+      return;
+    }
+    if (!['image/png', 'image/jpeg'].includes(file.type)) {
+      setCheckInFile(null);
+      setCheckInResult({ success: false, message: 'Chỉ hỗ trợ ảnh PNG, JPG hoặc JPEG.' });
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setCheckInFile(null);
+      setCheckInResult({ success: false, message: 'Ảnh QR không được vượt quá 5 MB.' });
+      event.target.value = '';
+      return;
+    }
+    setCheckInFile(file);
   };
 
   const updateAuthValues = (field, value) => {
@@ -1827,11 +1854,35 @@ function App() {
                       </div>
 
                       <form onSubmit={handleCheckIn}>
+                        <div style={{ marginBottom: '16px' }}>
+                          <label htmlFor="checkin-event" style={{ display: 'block', marginBottom: '8px', color: '#334155', fontWeight: 700 }}>
+                            Sự kiện check-in
+                          </label>
+                          <select
+                            id="checkin-event"
+                            value={checkInEventId}
+                            onChange={(event) => {
+                              setCheckInEventId(event.target.value);
+                              setCheckInResult(null);
+                            }}
+                            style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '12px', background: '#ffffff', color: '#0f172a', fontSize: '0.95rem' }}
+                          >
+                            <option value="">-- Chọn sự kiện --</option>
+                            {events.map((event) => (
+                              <option key={event.id} value={event.id}>
+                                {event.title} — {new Date(event.dateTime).toLocaleString('vi-VN')}
+                              </option>
+                            ))}
+                          </select>
+                          <small style={{ display: 'block', marginTop: '7px', color: '#64748b' }}>
+                            Cổng check-in mở trước giờ diễn 2 tiếng và đóng sau 6 tiếng.
+                          </small>
+                        </div>
                         <div className="checkin-dropzone">
                           <input
                             type="file"
-                            accept="image/*"
-                            onChange={(event) => setCheckInFile(event.target.files?.[0] || null)}
+                            accept="image/png,image/jpeg"
+                            onChange={handleCheckInFileChange}
                           />
                           <div className="checkin-dropzone-icon">📥</div>
                           <div className="checkin-dropzone-title">
@@ -1845,7 +1896,7 @@ function App() {
                           )}
                         </div>
 
-                        <button type="submit" disabled={checkInLoading || !checkInFile} className="checkin-submit-btn">
+                        <button type="submit" disabled={checkInLoading || !checkInFile || !checkInEventId} className="checkin-submit-btn">
                           {checkInLoading ? '⏳ Đang quét & xử lý...' : ' Quét check-in ngay'}
                         </button>
                       </form>

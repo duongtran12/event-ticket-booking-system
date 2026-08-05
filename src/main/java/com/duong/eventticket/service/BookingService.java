@@ -29,6 +29,6 @@ public interface BookingService {
 
     java.math.BigDecimal sumBookingRevenueByStatus(BookingStatus status);
 
-    CheckInResponse checkInBooking(String adminEmail, byte[] imageBytes);
+    CheckInResponse checkInBooking(String adminEmail, Long eventId, byte[] imageBytes);
     int backfillQrForSoldBookings();
 }

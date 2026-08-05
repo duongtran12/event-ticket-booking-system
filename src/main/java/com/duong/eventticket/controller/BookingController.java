@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
+import java.util.Set;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +29,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequiredArgsConstructor
 @Tag(name = "Bookings", description = "APIs for booking tickets and managing booking history")
 public class BookingController {
+
+    private static final long MAX_QR_FILE_SIZE = 5L * 1024 * 1024;
+    private static final Set<String> ALLOWED_QR_CONTENT_TYPES = Set.of("image/png", "image/jpeg");
 
     private final BookingService bookingService;
 
@@ -133,13 +137,23 @@ public class BookingController {
     @Operation(summary = "Check in a booking from a QR image uploaded by admin")
     public ResponseEntity<CheckInResponse> checkInBooking(
             @RequestParam("file") MultipartFile file,
+            @RequestParam("eventId") Long eventId,
             Authentication authentication
     ) {
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body(CheckInResponse.failure("Vui lòng chọn ảnh chứa mã QR"));
         }
+        if (eventId == null || eventId <= 0) {
+            return ResponseEntity.badRequest().body(CheckInResponse.failure("Vui lòng chọn sự kiện cần check-in"));
+        }
+        if (file.getSize() > MAX_QR_FILE_SIZE) {
+            return ResponseEntity.badRequest().body(CheckInResponse.failure("Ảnh QR không được vượt quá 5 MB"));
+        }
+        if (!ALLOWED_QR_CONTENT_TYPES.contains(file.getContentType())) {
+            return ResponseEntity.badRequest().body(CheckInResponse.failure("Chỉ hỗ trợ ảnh PNG, JPG hoặc JPEG"));
+        }
         try {
-            CheckInResponse response = bookingService.checkInBooking(authentication.getName(), file.getBytes());
+            CheckInResponse response = bookingService.checkInBooking(authentication.getName(), eventId, file.getBytes());
             return ResponseEntity.ok(response);
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(CheckInResponse.failure("Không thể xử lý ảnh QR: " + ex.getMessage()));
