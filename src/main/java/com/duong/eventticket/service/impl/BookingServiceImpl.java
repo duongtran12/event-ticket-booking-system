@@ -6,11 +6,13 @@ import com.duong.eventticket.entity.Booking;
 import com.duong.eventticket.entity.BookingStatus;
 import com.duong.eventticket.entity.Event;
 import com.duong.eventticket.entity.TicketType;
+import com.duong.eventticket.entity.Ticket;
 import com.duong.eventticket.entity.User;
 import com.duong.eventticket.exception.custom.ResourceNotFoundException;
 import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
 import com.duong.eventticket.repository.TicketTypeRepository;
+import com.duong.eventticket.repository.TicketRepository;
 import com.duong.eventticket.repository.UserRepository;
 import com.duong.eventticket.service.BookingService;
 import com.duong.eventticket.service.EmailService;
@@ -50,6 +52,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final EventRepository eventRepository;
     private final TicketTypeRepository ticketTypeRepository;
+    private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
 
@@ -361,10 +364,7 @@ public class BookingServiceImpl implements BookingService {
         if ("00".equals(responseCode)
                 && "00".equals(params.get("vnp_TransactionStatus"))
                 && booking.getStatus() == BookingStatus.RESERVED) {
-            // Ensure QR code exists when payment confirmed by callback
-            if (booking.getQrCodeValue() == null || booking.getQrCodeValue().isBlank()) {
-                booking.setQrCodeValue(buildQrCodeValue(booking));
-            }
+            issueTickets(booking);
             booking.setStatus(BookingStatus.SOLD);
             Booking saved = bookingRepository.save(booking);
             emailService.sendTicketEmail(saved);
@@ -393,12 +393,12 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public int backfillQrForSoldBookings() {
-        List<Booking> missing = bookingRepository.findByStatusAndQrCodeValueIsNull(BookingStatus.SOLD);
+        List<Booking> missing = bookingRepository.findByStatusAndTicketsEmpty(BookingStatus.SOLD);
         int count = 0;
         for (Booking b : missing) {
-            b.setQrCodeValue(buildQrCodeValue(b));
+            issueTickets(b);
             bookingRepository.save(b);
-            count++;
+            count += b.getTickets().size();
         }
         return count;
     }
@@ -411,20 +411,18 @@ public class BookingServiceImpl implements BookingService {
             return com.duong.eventticket.dto.response.CheckInResponse.failure("Không đọc được mã QR từ ảnh");
         }
 
-        Optional<Booking> bookingOpt = bookingRepository.findAll().stream()
-                .filter(booking -> qrText.equals(booking.getQrCodeValue()))
-                .findFirst();
-
-        if (bookingOpt.isEmpty()) {
+        Optional<Ticket> ticketOpt = ticketRepository.findByQrCodeValueWithLock(qrText);
+        if (ticketOpt.isEmpty()) {
             return com.duong.eventticket.dto.response.CheckInResponse.failure("Không tìm thấy vé tương ứng với mã QR");
         }
 
-        Booking booking = bookingOpt.get();
+        Ticket ticket = ticketOpt.get();
+        Booking booking = ticket.getBooking();
         if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.EXPIRED) {
             return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé không còn hợp lệ");
         }
 
-        if (booking.isCheckedIn()) {
+        if (ticket.isCheckedIn()) {
             return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé này đã được check-in trước đó");
         }
 
@@ -432,11 +430,18 @@ public class BookingServiceImpl implements BookingService {
             return com.duong.eventticket.dto.response.CheckInResponse.failure("Vé chưa được thanh toán thành công");
         }
 
-        booking.setCheckedIn(true);
         LocalDateTime now = LocalDateTime.now();
-        booking.setCheckedInAt(now);
-        booking.setCheckedInBy(adminEmail);
-        bookingRepository.save(booking);
+        ticket.setCheckedIn(true);
+        ticket.setCheckedInAt(now);
+        ticket.setCheckedInBy(adminEmail);
+        ticketRepository.save(ticket);
+
+        if (booking.getTickets().stream().allMatch(Ticket::isCheckedIn)) {
+            booking.setCheckedIn(true);
+            booking.setCheckedInAt(now);
+            booking.setCheckedInBy(adminEmail);
+            bookingRepository.save(booking);
+        }
 
         return com.duong.eventticket.dto.response.CheckInResponse.success(
                 "Check-in thành công",
@@ -444,13 +449,28 @@ public class BookingServiceImpl implements BookingService {
                 booking.getUser().getFullName(),
                 booking.getEvent().getTitle(),
                 booking.getEvent().getLocation(),
-            booking.getQrCodeValue(),
+            ticket.getQrCodeValue(),
             now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
         );
     }
 
     private String buildQrCodeValue(Booking booking) {
         return "EVT-" + booking.getEvent().getId() + "-BOOK-" + booking.getId() + "-" + UUID.randomUUID();
+    }
+
+    private void issueTickets(Booking booking) {
+        if (booking.getTickets() != null && !booking.getTickets().isEmpty()) {
+            return;
+        }
+        for (int index = 0; index < booking.getQuantity(); index++) {
+            Ticket ticket = new Ticket();
+            ticket.setBooking(booking);
+            String legacyQrCode = index == 0 ? booking.getQrCodeValue() : null;
+            ticket.setQrCodeValue(legacyQrCode != null && !legacyQrCode.isBlank()
+                    ? legacyQrCode
+                    : buildQrCodeValue(booking));
+            booking.getTickets().add(ticket);
+        }
     }
 
     private String decodeQrFromImage(byte[] imageBytes) {
@@ -554,6 +574,17 @@ public class BookingServiceImpl implements BookingService {
         } else {
             response.setQrCodeImage(null);
         }
+        response.setTickets(booking.getTickets().stream().map(ticket -> {
+            com.duong.eventticket.dto.response.TicketResponse ticketResponse =
+                    new com.duong.eventticket.dto.response.TicketResponse();
+            ticketResponse.setId(ticket.getId());
+            ticketResponse.setQrCodeValue(ticket.getQrCodeValue());
+            ticketResponse.setQrCodeImage(generateQrBase64(ticket.getQrCodeValue()));
+            ticketResponse.setCheckedIn(ticket.isCheckedIn());
+            ticketResponse.setCheckedInAt(ticket.getCheckedInAt());
+            ticketResponse.setCheckedInBy(ticket.getCheckedInBy());
+            return ticketResponse;
+        }).toList());
         return response;
     }
 }

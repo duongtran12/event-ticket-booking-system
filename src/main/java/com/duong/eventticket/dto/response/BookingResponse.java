@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -31,6 +32,7 @@ public class BookingResponse {
     private String refundReason;
     private String qrCodeValue;
     private String qrCodeImage;
+    private List<TicketResponse> tickets;
     private Boolean checkedIn;
     private LocalDateTime checkedInAt;
     private String checkedInBy;

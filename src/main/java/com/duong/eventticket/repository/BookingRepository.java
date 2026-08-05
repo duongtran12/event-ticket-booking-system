@@ -49,5 +49,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByStatusAndQrCodeValueIsNull(BookingStatus status);
 
+    @Query("SELECT b FROM Booking b WHERE b.status = :status AND b.tickets IS EMPTY")
+    List<Booking> findByStatusAndTicketsEmpty(@Param("status") BookingStatus status);
+
     boolean existsByEventIdAndStatusIn(Long eventId, List<BookingStatus> statuses);
 }

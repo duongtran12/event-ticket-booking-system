@@ -1,6 +1,7 @@
 package com.duong.eventticket.service.impl;
 
 import com.duong.eventticket.entity.Booking;
+import com.duong.eventticket.entity.Ticket;
 import com.duong.eventticket.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -16,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.List;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -45,17 +47,19 @@ public class EmailServiceImpl implements EmailService {
 
             String subject = "🎟️ Vé sự kiện của bạn - " + booking.getEvent().getTitle();
 
-            byte[] qrImageBytes = generateQrImageBytes(booking.getQrCodeValue(), 300);
-
-            String html = buildTicketHtml(booking, qrImageBytes != null);
+            List<Ticket> tickets = booking.getTickets();
+            String html = buildTicketHtml(booking, tickets);
 
             helper.setFrom(fromEmail);
             helper.setTo(booking.getUser().getEmail());
             helper.setSubject(subject);
             helper.setText(html, true);
 
-            if (qrImageBytes != null) {
-                helper.addInline("qrcode", new ByteArrayResource(qrImageBytes), "image/png");
+            for (int index = 0; index < tickets.size(); index++) {
+                byte[] qrImageBytes = generateQrImageBytes(tickets.get(index).getQrCodeValue(), 300);
+                if (qrImageBytes != null) {
+                    helper.addInline("qrcode" + index, new ByteArrayResource(qrImageBytes), "image/png");
+                }
             }
 
             mailSender.send(message);
@@ -107,23 +111,25 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    private String buildTicketHtml(Booking booking, boolean hasQrImage) {
+    private String buildTicketHtml(Booking booking, List<Ticket> tickets) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         String formattedDate = booking.getEvent().getDateTime().format(formatter);
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
         String formattedPrice = currencyFormat.format(booking.getTotalPrice()) + " VND";
 
-        String qrSection;
-        if (hasQrImage) {
-            qrSection = "<div style='margin: 24px 0; text-align: center;'>"
-                    + "<p style='margin-bottom: 8px; font-weight: bold; color: #374151;'> Mã QR Check-in của bạn:</p>"
-                    + "<img src='cid:qrcode' alt='QR Code' style='width:220px; height:220px; border: 4px solid #2563eb; border-radius: 12px; padding: 8px; background:#fff;' />"
-                    + "<p style='margin-top: 8px; font-size: 11px; color: #6b7280; word-break: break-all;'>" + booking.getQrCodeValue() + "</p>"
-                    + "</div>";
-        } else {
-            qrSection = "<p><strong>Mã QR:</strong> " + booking.getQrCodeValue() + "</p>";
+        StringBuilder qrSectionBuilder = new StringBuilder();
+        for (int index = 0; index < tickets.size(); index++) {
+            Ticket ticket = tickets.get(index);
+            qrSectionBuilder.append("<div style='margin: 24px 0; text-align: center;'>")
+                    .append("<p style='margin-bottom: 8px; font-weight: bold; color: #374151;'>Vé ")
+                    .append(index + 1).append(" / ").append(tickets.size()).append("</p>")
+                    .append("<img src='cid:qrcode").append(index)
+                    .append("' alt='QR Code' style='width:220px; height:220px; border: 4px solid #2563eb; border-radius: 12px; padding: 8px; background:#fff;' />")
+                    .append("<p style='margin-top: 8px; font-size: 11px; color: #6b7280; word-break: break-all;'>")
+                    .append(escapeHtml(ticket.getQrCodeValue())).append("</p></div>");
         }
+        String qrSection = qrSectionBuilder.toString();
 
         return "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body>"
                 + "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb;'>"

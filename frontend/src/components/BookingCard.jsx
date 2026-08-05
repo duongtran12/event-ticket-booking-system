@@ -4,6 +4,9 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
   const [showQrModal, setShowQrModal] = useState(false);
   const totalPrice = booking.totalPrice ? Number(booking.totalPrice) : 0;
   const statusClass = (booking.status || '').toLowerCase();
+  const issuedTickets = booking.tickets?.length
+    ? booking.tickets
+    : (booking.qrCodeImage ? [{ id: booking.id, qrCodeImage: booking.qrCodeImage, checkedIn: booking.checkedIn }] : []);
 
   const statusLabelMap = {
     RESERVED: 'Chờ thanh toán',
@@ -179,10 +182,10 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
           </div>
 
           {/* QR CODE DISPLAY IF SOLD */}
-          {booking.status === 'SOLD' && booking.qrCodeImage && (
+          {booking.status === 'SOLD' && issuedTickets.length > 0 && (
             <>
               <div className="ticket-qr-container" style={{ cursor: 'pointer' }} onClick={() => setShowQrModal(true)}>
-                <img src={booking.qrCodeImage} alt="QR Code" className="ticket-qr-img" />
+                <img src={issuedTickets[0].qrCodeImage} alt="QR Code" className="ticket-qr-img" />
               </div>
               <button
                 type="button"
@@ -196,7 +199,7 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
                   cursor: 'pointer'
                 }}
               >
-                🔍 Phóng to mã QR
+                🔍 Xem {issuedTickets.length} mã QR
               </button>
             </>
           )}
@@ -284,9 +287,11 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
             backdropFilter: 'blur(6px)',
             zIndex: 99999,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
-            padding: '20px'
+            padding: '20px',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain'
           }}
           onClick={() => setShowQrModal(false)}
         >
@@ -295,8 +300,11 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
               background: '#ffffff',
               borderRadius: '28px',
               padding: '32px',
-              maxWidth: '400px',
+              maxWidth: '760px',
               width: '100%',
+              maxHeight: 'calc(100vh - 40px)',
+              overflowY: 'auto',
+              margin: 'auto',
               textAlign: 'center',
               boxShadow: '0 25px 60px rgba(0,0,0,0.35)',
               position: 'relative',
@@ -327,27 +335,22 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
             </button>
 
             <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', color: '#0f172a', fontWeight: '800' }}>
-              Mã QR Vé Vào Cổng
+              Mã QR Vé Vào Cổng ({issuedTickets.length} vé)
             </h3>
             <p style={{ margin: '0 0 20px', fontSize: '0.88rem', color: '#64748b' }}>
               Trình mã này tại quầy check-in để xác nhận vé
             </p>
 
-            <div
-              style={{
-                background: '#ffffff',
-                padding: '20px',
-                borderRadius: '20px',
-                border: '2px dashed #cbd5e1',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.05)',
-                display: 'inline-block'
-              }}
-            >
-              <img
-                src={booking.qrCodeImage}
-                alt="QR Code Large"
-                style={{ width: '220px', height: '220px', display: 'block', borderRadius: '8px' }}
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+              {issuedTickets.map((ticket, index) => (
+                <div key={ticket.id || index} style={{ background: '#ffffff', padding: '16px', borderRadius: '20px', border: '2px dashed #cbd5e1' }}>
+                  <strong>Vé {index + 1}</strong>
+                  <img src={ticket.qrCodeImage} alt={`QR vé ${index + 1}`} style={{ width: '200px', height: '200px', display: 'block', margin: '10px auto', borderRadius: '8px' }} />
+                  <span style={{ color: ticket.checkedIn ? '#059669' : '#64748b', fontSize: '0.8rem' }}>
+                    {ticket.checkedIn ? 'Đã check-in' : 'Chưa check-in'}
+                  </span>
+                </div>
+              ))}
             </div>
 
             <div style={{ marginTop: '18px', padding: '10px 14px', background: '#f8fafc', borderRadius: '12px', fontSize: '0.88rem', fontWeight: '700', color: '#1e293b' }}>

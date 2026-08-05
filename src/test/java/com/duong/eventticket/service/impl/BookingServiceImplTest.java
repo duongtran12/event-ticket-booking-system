@@ -11,6 +11,7 @@ import com.duong.eventticket.exception.custom.ResourceNotFoundException;
 import com.duong.eventticket.repository.BookingRepository;
 import com.duong.eventticket.repository.EventRepository;
 import com.duong.eventticket.repository.TicketTypeRepository;
+import com.duong.eventticket.repository.TicketRepository;
 import com.duong.eventticket.repository.UserRepository;
 import com.duong.eventticket.service.EmailService;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -55,6 +57,9 @@ class BookingServiceImplTest {
 
     @Mock
     private TicketTypeRepository ticketTypeRepository;
+
+    @Mock
+    private TicketRepository ticketRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -156,7 +161,11 @@ class BookingServiceImplTest {
 
         assertEquals(true, result);
         assertEquals(BookingStatus.SOLD, booking.getStatus());
-        assertNotNull(booking.getQrCodeValue());
+        assertEquals(3, booking.getTickets().size());
+        assertEquals(3, booking.getTickets().stream()
+                .map(com.duong.eventticket.entity.Ticket::getQrCodeValue)
+                .collect(Collectors.toSet()).size());
+        assertNotNull(booking.getTickets().getFirst().getQrCodeValue());
         verify(emailService).sendTicketEmail(booking);
     }
 
