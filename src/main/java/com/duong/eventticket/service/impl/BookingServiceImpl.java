@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -278,7 +279,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         String orderId = "booking_" + booking.getId();
-        String amount = String.valueOf(booking.getTotalPrice().multiply(BigDecimal.valueOf(100)).intValueExact());
+        String amount = booking.getTotalPrice().multiply(BigDecimal.valueOf(100)).toBigIntegerExact().toString();
         String vnpTxnRef = orderId + "_" + System.currentTimeMillis();
         String vnpCreateDate = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
 
@@ -321,14 +322,42 @@ public class BookingServiceImpl implements BookingService {
     public boolean handlePaymentCallback(Map<String, String> params) {
         String responseCode = params.get("vnp_ResponseCode");
         String bookingId = params.get("bookingId");
-        if (bookingId == null || responseCode == null) {
+        String secureHash = params.get("vnp_SecureHash");
+        if (bookingId == null || responseCode == null || secureHash == null || secureHash.isBlank()) {
             return false;
         }
 
-        Booking booking = bookingRepository.findById(Long.parseLong(bookingId))
+        if (!isValidVnpaySignature(params, secureHash)
+                || !vnpTmnCode.equals(params.get("vnp_TmnCode"))) {
+            return false;
+        }
+
+        Long parsedBookingId;
+        try {
+            parsedBookingId = Long.valueOf(bookingId);
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+
+        Booking booking = bookingRepository.findById(parsedBookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
 
-        if ("00".equals(responseCode) && booking.getStatus() == BookingStatus.RESERVED) {
+        String expectedAmount = booking.getTotalPrice()
+                .multiply(BigDecimal.valueOf(100))
+                .toBigIntegerExact()
+                .toString();
+        String transactionReference = params.get("vnp_TxnRef");
+        String expectedReferencePrefix = "booking_" + booking.getId() + "_";
+
+        if (!expectedAmount.equals(params.get("vnp_Amount"))
+                || transactionReference == null
+                || !transactionReference.startsWith(expectedReferencePrefix)) {
+            return false;
+        }
+
+        if ("00".equals(responseCode)
+                && "00".equals(params.get("vnp_TransactionStatus"))
+                && booking.getStatus() == BookingStatus.RESERVED) {
             // Ensure QR code exists when payment confirmed by callback
             if (booking.getQrCodeValue() == null || booking.getQrCodeValue().isBlank()) {
                 booking.setQrCodeValue(buildQrCodeValue(booking));
@@ -339,6 +368,23 @@ public class BookingServiceImpl implements BookingService {
             return true;
         }
         return false;
+    }
+
+    private boolean isValidVnpaySignature(Map<String, String> callbackParams, String receivedHash) {
+        Map<String, String> signedParams = new TreeMap<>();
+        callbackParams.forEach((key, value) -> {
+            if (key.startsWith("vnp_")
+                    && !"vnp_SecureHash".equals(key)
+                    && !"vnp_SecureHashType".equals(key)) {
+                signedParams.put(key, value);
+            }
+        });
+
+        String expectedHash = hmacSHA512(vnpHashSecret, buildHashData(signedParams));
+        return MessageDigest.isEqual(
+                expectedHash.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.US_ASCII),
+                receivedHash.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.US_ASCII)
+        );
     }
 
     @Override
