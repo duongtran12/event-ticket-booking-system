@@ -225,11 +225,12 @@ export async function checkInBooking(token, eventId, file) {
   return handleResponse(response);
 }
 
-export async function sendChatMessage(message) {
+export async function sendChatMessage(token, message) {
   const response = await fetch(`${API_BASE}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ message }),
   });

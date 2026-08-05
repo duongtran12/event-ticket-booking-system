@@ -553,11 +553,19 @@ function App() {
   };
 
   const handleSendChat = async (text) => {
+    if (!token) {
+      setChatMessages((current) => [
+        ...current,
+        { sender: 'bot', text: 'Bạn cần đăng nhập để sử dụng chatbot.' }
+      ]);
+      return;
+    }
+
     const userMessage = { sender: 'user', text };
     setChatMessages((current) => [...current, userMessage]);
 
     try {
-      const response = await sendChatMessage(text);
+      const response = await sendChatMessage(token, text);
       const botText = typeof response === 'string'
         ? response
         : response?.message || response?.text || 'Không nhận được phản hồi.';
