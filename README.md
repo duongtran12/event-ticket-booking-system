@@ -169,6 +169,7 @@ On PowerShell, use `Copy-Item .env.example .env` instead. For local backend runs
 | `SPRING_DATASOURCE_URL` | MySQL connection URL (default: `jdbc:mysql://localhost:3307/event_ticket_db`) |
 | `SPRING_DATASOURCE_USERNAME` | MySQL username |
 | `SPRING_DATASOURCE_PASSWORD` | MySQL password |
+| `FLYWAY_BASELINE_ON_MIGRATE` | Set `true` once when adopting Flyway for an existing database; use `false` afterwards |
 | `JWT_SECRET` | JWT signing key (min 32 bytes) |
 | `VNPAY_TMN_CODE` | VNPay merchant code |
 | `VNPAY_HASH_SECRET` | VNPay secret key |
@@ -198,6 +199,12 @@ npm install
 npm run dev
 ```
 The frontend will be available at `http://localhost:5173`.
+
+### Database migrations
+
+Flyway runs the scripts in `src/main/resources/db/migration` before Hibernate validates the schema. A fresh database runs `V1__baseline_schema.sql`. An existing project database is baselined at version 1 without recreating its tables or deleting its data.
+
+After the first successful startup against an existing database, set `FLYWAY_BASELINE_ON_MIGRATE=false`. Every later schema change must be added as the next versioned script, for example `V2__add_event_category.sql`; do not edit a migration that has already run.
 
 #### Docker (Full Stack)
 ```bash
