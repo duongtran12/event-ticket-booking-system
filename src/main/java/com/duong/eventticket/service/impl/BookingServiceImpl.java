@@ -233,31 +233,15 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Only SOLD bookings can be refunded. Current status: " + booking.getStatus());
         }
 
-        Event event = eventRepository.findByIdWithLock(booking.getEvent().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-
-        if (event.getDateTime().isBefore(LocalDateTime.now().plusDays(1))) {
+        if (booking.getEvent().getDateTime().isBefore(LocalDateTime.now().plusDays(1))) {
             throw new IllegalArgumentException("Hoàn vé chỉ áp dụng trước 1 ngày so với thời gian diễn ra sự kiện.");
         }
 
-        if (booking.getTicketType() != null && booking.getTicketType().getId() != null) {
-            ticketTypeRepository.findByIdWithLock(booking.getTicketType().getId())
-                    .ifPresent(ticketType -> {
-                        ticketType.setAvailableTickets(ticketType.getAvailableTickets() + booking.getQuantity());
-                        ticketTypeRepository.save(ticketType);
-                    });
-        }
-
-        event.setAvailableTickets(event.getAvailableTickets() + booking.getQuantity());
-        eventRepository.save(event);
-
-        booking.setStatus(BookingStatus.REFUNDED);
+        booking.setStatus(BookingStatus.REFUND_REQUESTED);
         booking.setRefundReason(reason);
-        booking.setCancelReason(reason);
-        Booking refundedBooking = bookingRepository.save(booking);
+        Booking refundRequest = bookingRepository.save(booking);
 
-        emailService.sendRefundEmail(refundedBooking);
-        return mapToResponse(refundedBooking);
+        return mapToResponse(refundRequest);
     }
 
     @Override

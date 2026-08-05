@@ -8,6 +8,7 @@ public enum BookingStatus {
     AVAILABLE,
     RESERVED,
     SOLD,
+    REFUND_REQUESTED,
     REFUNDED,
     EXPIRED
 }

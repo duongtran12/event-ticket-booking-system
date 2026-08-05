@@ -487,15 +487,8 @@ function App() {
     setMessage(null);
 
     try {
-      const refundedBooking = await refundBooking(token, bookingId, reason.trim() || 'Yêu cầu hoàn vé');
-      setMessage('Yêu cầu hoàn vé đã được xử lý. Số lượng vé đã được trả về pool vé khả dụng.');
-      setEvents((currentEvents) =>
-        currentEvents.map((event) =>
-          event.id === refundedBooking.eventId
-            ? { ...event, availableTickets: Math.max((event.availableTickets || 0) + refundedBooking.quantity, 0) }
-            : event
-        )
-      );
+      await refundBooking(token, bookingId, reason.trim() || 'Yêu cầu hoàn vé');
+      setMessage('Đã gửi yêu cầu hoàn vé. Vé và tiền chỉ được cập nhật sau khi hệ thống thanh toán xác nhận hoàn tiền.');
       fetchBookings();
       if (activePage === PAGES.HOME) {
         fetchEvents();

@@ -181,6 +181,26 @@ class BookingServiceImplTest {
         verify(bookingRepository, never()).save(any());
     }
 
+    @Test
+    void refundShouldCreateRequestWithoutReturningTicketsOrSendingConfirmation() {
+        Booking booking = buildReservedBooking(10L, BigDecimal.valueOf(300000));
+        booking.setStatus(BookingStatus.SOLD);
+        booking.getEvent().setDateTime(LocalDateTime.now().plusDays(2));
+        booking.setTicketType(buildTicketType(20L, booking.getEvent(), BigDecimal.valueOf(100000), 50));
+
+        when(bookingRepository.findById(10L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        BookingResponse response = bookingService.refundBooking("user@example.com", 10L, "Changed plans");
+
+        assertEquals("REFUND_REQUESTED", response.getStatus());
+        assertEquals(97, booking.getEvent().getAvailableTickets());
+        assertEquals(50, booking.getTicketType().getAvailableTickets());
+        verify(eventRepository, never()).save(any());
+        verify(ticketTypeRepository, never()).save(any());
+        verify(emailService, never()).sendRefundEmail(any());
+    }
+
     private Booking buildReservedBooking(Long id, BigDecimal totalPrice) {
         Booking booking = new Booking();
         booking.setId(id);

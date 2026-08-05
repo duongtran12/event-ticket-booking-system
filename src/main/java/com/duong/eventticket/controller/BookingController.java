@@ -82,7 +82,7 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/refund")
-    @Operation(summary = "Refund a paid booking")
+    @Operation(summary = "Request a refund for a paid booking")
     public ResponseEntity<BookingResponse> refundBooking(
             @PathVariable Long id,
             Authentication authentication,

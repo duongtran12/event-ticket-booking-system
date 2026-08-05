@@ -8,6 +8,7 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
   const statusLabelMap = {
     RESERVED: 'Chờ thanh toán',
     SOLD: 'Đã thanh toán',
+    REFUND_REQUESTED: 'Đang chờ hoàn tiền',
     REFUNDED: 'Đã hoàn tiền',
     AVAILABLE: 'Sẵn sàng',
     EXPIRED: 'Hết hạn thanh toán',
@@ -19,6 +20,7 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
   const statusColors = {
     RESERVED: { text: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: '⏳' },
     SOLD: { text: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: '🎟️' },
+    REFUND_REQUESTED: { text: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: '⏳' },
     REFUNDED: { text: '#047857', bg: '#ecfdf5', border: '#a7f3d0', icon: '💸' },
     CONFIRMED: { text: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: '✅' },
     AVAILABLE: { text: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: '⚡' },
@@ -135,7 +137,7 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
             </div>
           )}
 
-          {booking.status === 'REFUNDED' && booking.refundReason && (
+          {(booking.status === 'REFUND_REQUESTED' || booking.status === 'REFUNDED') && booking.refundReason && (
             <div
               style={{
                 padding: '12px 16px',
@@ -146,7 +148,7 @@ export function BookingCard({ booking, onPay, onCancel, onRefund }) {
                 fontSize: '0.85rem'
               }}
             >
-              <strong>Lý do hoàn tiền:</strong> {booking.refundReason}
+              <strong>Lý do yêu cầu hoàn tiền:</strong> {booking.refundReason}
             </div>
           )}
 
