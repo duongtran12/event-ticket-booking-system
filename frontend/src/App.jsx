@@ -732,6 +732,7 @@ function App() {
         onNavigate={handleNavigate}
         isAuthenticated={isAuthenticated}
         isAdmin={isAdmin}
+        userEmail={userEmail}
         onLogout={handleLogout}
         keyword={keyword}
         onKeywordChange={setKeyword}
@@ -746,6 +747,7 @@ function App() {
         <button
           type="button"
           onClick={handleOpenChat}
+          className="chat-launcher"
           style={{
             position: 'fixed',
             right: '24px',
@@ -782,6 +784,7 @@ function App() {
 
         {activePage === PAGES.HOME && (
           <section
+            className="home-page"
             style={{
               maxWidth: '1360px',
               margin: '0 auto',
@@ -791,6 +794,7 @@ function App() {
           >
             {/* HERO BANNER SECTION */}
             <div
+              className="home-hero"
               style={{
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)',
                 borderRadius: '28px',
@@ -802,8 +806,9 @@ function App() {
                 overflow: 'hidden'
               }}
             >
-              <div style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
+              <div className="home-hero-content" style={{ maxWidth: '780px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 2 }}>
                 <span
+                  className="home-hero-eyebrow"
                   style={{
                     display: 'inline-block',
                     padding: '6px 16px',
@@ -822,6 +827,7 @@ function App() {
                 </span>
 
                 <h1
+                  className="home-hero-title"
                   style={{
                     fontSize: 'clamp(2rem, 4vw, 2.75rem)',
                     fontWeight: '800',
@@ -835,6 +841,7 @@ function App() {
                 </h1>
 
                 <p
+                  className="home-hero-description"
                   style={{
                     fontSize: '16px',
                     color: '#94a3b8',
@@ -849,6 +856,7 @@ function App() {
 
                 {/* INTEGRATED HERO SEARCH FORM */}
                 <form
+                  className="home-hero-search"
                   onSubmit={handleSearch}
                   style={{
                     display: 'flex',
@@ -909,6 +917,7 @@ function App() {
 
             {/* EXPANDABLE FILTERS SECTION */}
             <div
+              className="advanced-filter-panel"
               style={{
                 marginBottom: '20px',
                 background: '#ffffff',
