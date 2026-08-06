@@ -565,7 +565,7 @@ function App() {
     setChatMessages((current) => [...current, userMessage]);
 
     try {
-      const response = await sendChatMessage(token, text);
+      const response = await sendChatMessage(token, text, chatMessages);
       const botText = typeof response === 'string'
         ? response
         : response?.message || response?.text || 'Không nhận được phản hồi.';

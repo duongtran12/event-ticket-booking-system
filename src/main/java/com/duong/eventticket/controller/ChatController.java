@@ -17,7 +17,7 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatResponse> chat(@Valid @RequestBody ChatRequest request) {
-        String answer = openAIChatService.ask(request.message());
+        String answer = openAIChatService.ask(request.message(), request.history());
         return ResponseEntity.ok(new ChatResponse(answer));
     }
 }

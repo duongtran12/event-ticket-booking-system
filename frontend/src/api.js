@@ -225,14 +225,20 @@ export async function checkInBooking(token, eventId, file) {
   return handleResponse(response);
 }
 
-export async function sendChatMessage(token, message) {
+export async function sendChatMessage(token, message, history = []) {
   const response = await fetch(`${API_BASE}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({
+      message,
+      history: history.slice(-10).map((item) => ({
+        role: item.sender === 'user' ? 'user' : 'assistant',
+        content: String(item.text || '').slice(0, 2000),
+      })),
+    }),
   });
 
   return handleResponse(response);
