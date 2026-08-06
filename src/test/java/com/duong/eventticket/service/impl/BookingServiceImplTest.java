@@ -216,7 +216,7 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void refundShouldCreateRequestWithoutReturningTicketsOrSendingConfirmation() {
+    void refundShouldCreateRequestAndSendAcknowledgementWithoutReturningTickets() {
         Booking booking = buildReservedBooking(10L, BigDecimal.valueOf(300000));
         booking.setStatus(BookingStatus.SOLD);
         booking.getEvent().setDateTime(LocalDateTime.now().plusDays(2));
@@ -232,7 +232,7 @@ class BookingServiceImplTest {
         assertEquals(50, booking.getTicketType().getAvailableTickets());
         verify(eventRepository, never()).save(any());
         verify(ticketTypeRepository, never()).save(any());
-        verify(emailService, never()).sendRefundEmail(any());
+        verify(emailService, times(1)).sendRefundEmail(booking);
     }
 
     @Test

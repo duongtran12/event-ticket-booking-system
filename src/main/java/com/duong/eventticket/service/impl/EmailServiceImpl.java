@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -80,7 +81,7 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            String subject = "✅ Xác nhận hoàn tiền vé sự kiện - " + booking.getEvent().getTitle();
+            String subject = "Yêu cầu hoàn vé đã được tiếp nhận - " + booking.getEvent().getTitle();
             String html = buildRefundHtml(booking);
 
             helper.setFrom(fromEmail);
@@ -90,7 +91,7 @@ public class EmailServiceImpl implements EmailService {
 
             mailSender.send(message);
             log.info("Sent refund email to {} for booking {}", booking.getUser().getEmail(), booking.getId());
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             log.error("Failed to send refund email for booking {}: {}", booking.getId(), e.getMessage(), e);
         }
     }
@@ -176,13 +177,13 @@ public class EmailServiceImpl implements EmailService {
 
         return "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body>"
                 + "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb;'>"
-                + "<div style='background: linear-gradient(135deg, #047857, #10b981); padding: 32px 24px; text-align: center;'>"
-                + "<h1 style='color: #ffffff; margin: 0; font-size: 26px;'>✅ Hoàn tiền vé thành công</h1>"
-                + "<p style='color: #bbf7d0; margin: 8px 0 0; font-size: 14px;'>Số tiền hoàn sẽ được trả lại theo phương thức bạn đã thanh toán.</p>"
+                + "<div style='background: linear-gradient(135deg, #b45309, #f59e0b); padding: 32px 24px; text-align: center;'>"
+                + "<h1 style='color: #ffffff; margin: 0; font-size: 26px;'>Yêu cầu hoàn vé đã được tiếp nhận</h1>"
+                + "<p style='color: #fef3c7; margin: 8px 0 0; font-size: 14px;'>Yêu cầu của bạn đang chờ được xử lý.</p>"
                 + "</div>"
                 + "<div style='padding: 28px 32px; background: #ffffff;'>"
-                + "<p style='color: #1f2937; font-size: 16px;'>Xin chào <strong style='color: #047857;'>" + escapeHtml(booking.getUser().getFullName()) + "</strong>,</p>"
-                + "<p style='color: #374151;'>Yêu cầu hoàn vé của bạn đã được xử lý thành công. Dưới đây là chi tiết:</p>"
+                + "<p style='color: #1f2937; font-size: 16px;'>Xin chào <strong style='color: #b45309;'>" + escapeHtml(booking.getUser().getFullName()) + "</strong>,</p>"
+                + "<p style='color: #374151;'>Hệ thống đã tiếp nhận yêu cầu hoàn vé của bạn. Dưới đây là thông tin yêu cầu:</p>"
                 + "<table style='width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;'>"
                 + buildRow(" Sự kiện", escapeHtml(booking.getEvent().getTitle()))
                 + buildRow(" Địa điểm", escapeHtml(booking.getEvent().getLocation()))
@@ -190,10 +191,10 @@ public class EmailServiceImpl implements EmailService {
                 + buildRow(" Số lượng vé", booking.getQuantity() + " vé")
                 + buildRow(" Loại vé", booking.getTicketType() != null ? escapeHtml(booking.getTicketType().getName()) : "---")
                 + buildRow(" Lý do hoàn vé", escapeHtml(booking.getRefundReason()))
-                + buildRow(" Số tiền hoàn", formattedPrice)
+                + buildRow(" Số tiền yêu cầu hoàn", formattedPrice)
                 + "</table>"
-                + "<div style='background: #ecfdf5; border-left: 4px solid #34d399; padding: 12px 16px; border-radius: 4px; margin-top: 20px;'>"
-                + "<p style='margin: 0; color: #065f46; font-size: 14px;'><strong>Lưu ý:</strong> Thời gian nhận tiền có thể mất từ 1-5 ngày làm việc tùy ngân hàng.</p>"
+                + "<div style='background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 4px; margin-top: 20px;'>"
+                + "<p style='margin: 0; color: #92400e; font-size: 14px;'><strong>Lưu ý:</strong> Đây là xác nhận tiếp nhận yêu cầu, chưa phải xác nhận tiền đã được hoàn.</p>"
                 + "</div>"
                 + "</div>"
                 + "<div style='background: #f3f4f6; padding: 16px 24px; text-align: center; font-size: 12px; color: #6b7280;'>"

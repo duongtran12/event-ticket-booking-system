@@ -264,6 +264,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.REFUND_REQUESTED);
         booking.setRefundReason(reason);
         Booking refundRequest = bookingRepository.save(booking);
+        emailService.sendRefundEmail(refundRequest);
 
         return mapToResponse(refundRequest);
     }
