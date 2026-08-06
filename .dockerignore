@@ -1,0 +1,11 @@
+.git
+.github
+.idea
+.vscode
+.env
+target
+frontend
+node_modules
+*.log
+*.zip
+event-ticket-backups

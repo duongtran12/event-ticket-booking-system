@@ -64,5 +64,17 @@ services:
     ports:
       - "127.0.0.1:8081:8081"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eventticket-frontend
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    mem_limit: 64m
+
 volumes:
   mysql_data:
