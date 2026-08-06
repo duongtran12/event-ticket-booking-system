@@ -7,6 +7,7 @@ import com.duong.eventticket.dto.response.CheckInResponse;
 import com.duong.eventticket.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,9 @@ public class BookingController {
     private static final Set<String> ALLOWED_QR_CONTENT_TYPES = Set.of("image/png", "image/jpeg");
 
     private final BookingService bookingService;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @PostMapping
     @Operation(summary = "Create a booking")
@@ -125,11 +129,11 @@ public class BookingController {
 
         boolean success = bookingService.handlePaymentCallback(params);
         String result = success ? "success" : "failed";
-        String frontendUrl = "http://localhost:3000/?bookingId=" + bookingId
+        String redirectUrl = frontendUrl + "/?bookingId=" + bookingId
                 + "&vnp_ResponseCode=" + responseCode
                 + "&paymentResult=" + result;
 
-        return ResponseEntity.status(302).location(java.net.URI.create(frontendUrl)).build();
+        return ResponseEntity.status(302).location(java.net.URI.create(redirectUrl)).build();
     }
 
     @PostMapping("/check-in")
