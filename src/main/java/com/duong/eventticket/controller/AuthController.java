@@ -21,6 +21,7 @@ public class AuthController {
 
     private final AuthService authService;
 
+    // Endpoint để tạo tài khoản mới, nhận dữ liệu đăng ký từ client
     @PostMapping("/register")
     @Operation(summary = "Register a new user")
     public ResponseEntity<MessageResponse> register(
@@ -32,6 +33,7 @@ public class AuthController {
         );
     }
 
+    // Endpoint đăng nhập, trả về token JWT khi xác thực thành công
     @PostMapping("/login")
     @Operation(summary = "Login and receive a JWT token")
     public ResponseEntity<LoginResponse> login(
