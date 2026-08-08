@@ -23,24 +23,36 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    // Repository to manage User persistence
     private final UserRepository userRepository;
+
+    // Repository to look up roles for new users
     private final RoleRepository roleRepository;
+
+    // Password encoder for hashing user passwords
     private final PasswordEncoder passwordEncoder;
+
+    // Spring Security authentication manager for login checks
     private final AuthenticationManager authenticationManager;
+
+    // JWT service used to create authentication tokens
     private final JwtService jwtService;
 
     @Override
     public MessageResponse register(RegisterRequest request) {
 
+        // Prevent duplicate email registration
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ResourceAlreadyExistsException("Email already exists");
         }
 
+        // Find default user role, fail if missing
         Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
 
         User user = new User();
 
+        // Map request fields to the User entity
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
@@ -49,6 +61,7 @@ public class AuthServiceImpl implements AuthService {
         user.setGender(request.getGender());
         user.setAvatarUrl(request.getAvatarUrl());
 
+        // Store encoded password, never save plain text
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         user.setRole(userRole);
@@ -61,6 +74,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest request) {
 
+        // Authenticate credentials using Spring Security
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -68,10 +82,8 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
-        String token =
-                jwtService.generateToken(
-                        request.getEmail()
-                );
+        // Generate JWT token after successful authentication
+        String token = jwtService.generateToken(request.getEmail());
 
         return new LoginResponse(token);
     }
